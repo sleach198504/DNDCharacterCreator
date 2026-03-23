@@ -3080,7 +3080,8 @@ const C = {
   hpMethod: 'average', hpPerLevel: [],
   charInfo:{age:'',height:'',weight:'',eyes:'',skin:'',hair:'',personality:'',ideals:'',bonds:'',flaws:'',backstory:''},
   customBg:{skills:[],tool1:'',tool2:'',lang1:'',lang2:'',feature:''},
-  otherSpells: []
+  otherSpells: [],
+  extraSpells: []  // spells added via the "Add Any Spell" free-form browser
 };
 
 let step = 0;
@@ -4840,13 +4841,16 @@ function renderSpells(el) {
     card.appendChild(cantLabel);
     for(const s of cants){
       const sel=C.cantrips.includes(s);
-      const {wrap,sp}=mkSpellTag(s,sel?'sel-cantrip':'',()=>{
+      const inExtra=(C.extraSpells||[]).includes(s);
+      const {wrap,sp}=mkSpellTag(s,(sel||inExtra)?'sel-cantrip':'',()=>{
+        if(inExtra) return;
         if(C.cantrips.includes(s)) C.cantrips=C.cantrips.filter(x=>x!==s);
         else if(cantripMax==null || C.cantrips.length<cantripMax) C.cantrips=[...C.cantrips,s];
         else return;
         render();
       });
-      if(!sel && atMax) sp.style.opacity='0.4';
+      if(inExtra){ sp.style.opacity='0.5'; sp.style.cursor='not-allowed'; sp.title='Added via "Add Any Spell"'; }
+      else if(!sel && atMax) sp.style.opacity='0.4';
       card.appendChild(wrap);
     }
     el.appendChild(card);
@@ -4861,23 +4865,29 @@ function renderSpells(el) {
         return true;
       }).sort()
     : (SPELLS1[spellCls]||[]);
+  // Shared limit across all leveled spells (known casters)
+  const totalLeveledSelected = () => (C.spells1||[]).length + (C.otherSpells||[]).filter(n=>(SPELL_REF[n]||{}).lv>0).length;
+
   const sp1=sp1Base;
   if(sp1.length){
-    const spellNote=spellsKnownTotal!=null?`— ${C.spells1.length} / ${spellsKnownTotal} known`:spellType==='prepared'?`— select your prepared list`:spellType==='spellbook'?'— select spellbook contents':'';
+    const spellNote=spellsKnownTotal!=null?`— ${totalLeveledSelected()} / ${spellsKnownTotal} known`:spellType==='prepared'?`— select your prepared list`:spellType==='spellbook'?'— select spellbook contents':'';
     const card=document.createElement('div'); card.className='card'; card.style.marginBottom='14px';
     const sp1Label=document.createElement('div'); sp1Label.className='label'; sp1Label.style.marginBottom='8px';
     sp1Label.textContent=`1st-Level Spells ${spellNote}`;
     card.appendChild(sp1Label);
     for(const s of sp1){
       const sel=C.spells1.includes(s);
-      const atSpMax=spellsKnownTotal!=null && C.spells1.length>=spellsKnownTotal;
-      const {wrap,sp}=mkSpellTag(s,sel?'sel-spell':'',()=>{
+      const inExtra=(C.extraSpells||[]).includes(s);
+      const atSpMax=spellsKnownTotal!=null && totalLeveledSelected()>=spellsKnownTotal;
+      const {wrap,sp}=mkSpellTag(s,(sel||inExtra)?'sel-spell':'',()=>{
+        if(inExtra) return;
         if(C.spells1.includes(s)) C.spells1=C.spells1.filter(x=>x!==s);
-        else if(spellsKnownTotal==null || C.spells1.length<spellsKnownTotal) C.spells1=[...C.spells1,s];
+        else if(spellsKnownTotal==null || totalLeveledSelected()<spellsKnownTotal) C.spells1=[...C.spells1,s];
         else return;
         render();
       });
-      if(!sel && atSpMax) sp.style.opacity='0.4';
+      if(inExtra){ sp.style.opacity='0.5'; sp.style.cursor='not-allowed'; sp.title='Added via "Add Any Spell"'; }
+      else if(!sel && atSpMax) sp.style.opacity='0.4';
       card.appendChild(wrap);
     }
     el.appendChild(card);
@@ -4901,7 +4911,6 @@ function renderSpells(el) {
 
   // For known casters: total non-cantrip limit is shared across all levels
   const totalLeveledLimit = spellsKnownTotal;
-  const totalLeveledSelected = () => (C.spells1||[]).length + (C.otherSpells||[]).filter(n=>(SPELL_REF[n]||{}).lv>0).length;
 
   const lvlOrd = lv => lv===1?'1st':lv===2?'2nd':lv===3?'3rd':lv+'th';
 
@@ -4930,7 +4939,9 @@ function renderSpells(el) {
 
     for (const s of lvSpells) {
       const isSel = () => (C.otherSpells||[]).includes(s);
-      const {wrap, sp} = mkSpellTag(s, isSel() ? 'sel-spell' : '', () => {
+      const inExtra = (C.extraSpells||[]).includes(s);
+      const {wrap, sp} = mkSpellTag(s, (isSel()||inExtra) ? 'sel-spell' : '', () => {
+        if (inExtra) return;
         if ((C.otherSpells||[]).includes(s)) {
           C.otherSpells = C.otherSpells.filter(x => x !== s);
         } else {
@@ -4940,7 +4951,8 @@ function renderSpells(el) {
         }
         render();
       });
-      if (!isSel() && totalLeveledLimit != null && totalLeveledSelected() >= totalLeveledLimit) sp.style.opacity = '0.4';
+      if (inExtra) { sp.style.opacity='0.5'; sp.style.cursor='not-allowed'; sp.title='Added via "Add Any Spell"'; }
+      else if (!isSel() && totalLeveledLimit != null && totalLeveledSelected() >= totalLeveledLimit) sp.style.opacity = '0.4';
       lvCard.appendChild(wrap);
     }
     el.appendChild(lvCard);
@@ -4949,16 +4961,16 @@ function renderSpells(el) {
   // Other Spells / Notes section with searchable browser
   const otherCard=document.createElement('div'); otherCard.className='card'; otherCard.style.marginBottom='14px';
   otherCard.innerHTML=`<div class="label" style="margin-bottom:8px;">Add Any Spell</div>`;
-  // Currently added other spells list (shows ALL otherSpells for visibility)
-  if(C.otherSpells && C.otherSpells.length){
+  // Currently added extra spells list
+  if(C.extraSpells && C.extraSpells.length){
     const addedDiv=document.createElement('div'); addedDiv.style.cssText='margin-bottom:10px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;';
     const addedLbl=document.createElement('span'); addedLbl.style.cssText='font-size:11px;color:var(--parchment-dim);margin-right:4px;'; addedLbl.textContent='Added:';
     addedDiv.appendChild(addedLbl);
-    for(const s of C.otherSpells){
+    for(const s of C.extraSpells){
       const {wrap,sp}=mkSpellTag(s,'sel-spell',()=>{});
       sp.style.cursor='default';
       const rm=document.createElement('span'); rm.style.cssText='font-size:10px;color:var(--red,#c04);cursor:pointer;margin-left:2px;'; rm.textContent='✕';
-      rm.addEventListener('click',()=>{C.otherSpells=C.otherSpells.filter(x=>x!==s);render();});
+      rm.addEventListener('click',()=>{C.extraSpells=C.extraSpells.filter(x=>x!==s);render();});
       wrap.appendChild(rm);
       addedDiv.appendChild(wrap);
     }
@@ -5005,11 +5017,14 @@ function renderSpells(el) {
         showPopup(name,`<div style="font-size:11px;color:var(--gold);margin-bottom:8px;">${metaLine}</div>${ref.cls?`<div style="font-size:11px;color:var(--parchment-dim);margin-bottom:8px;">Classes: ${ref.cls}</div>`:''}<div style="font-size:12px;line-height:1.6;">${ref.d||'No description.'}</div>`,ref.src||'PHB');
       });
       const addBtn=document.createElement('button'); addBtn.className='btn-sm'; addBtn.style.cssText='font-size:10px;padding:2px 8px;';
-      const already=(C.otherSpells||[]).includes(name);
-      addBtn.textContent=already?'✓ Added':'+ Add';
-      if(already) addBtn.style.opacity='0.5';
+      const inExtra=(C.extraSpells||[]).includes(name);
+      const inList=(C.cantrips||[]).includes(name)||(C.spells1||[]).includes(name)||(C.otherSpells||[]).includes(name);
+      if(inList){ addBtn.textContent='✓ In List'; addBtn.style.opacity='0.5'; addBtn.disabled=true; }
+      else if(inExtra){ addBtn.textContent='✓ Added'; addBtn.style.opacity='0.5'; }
+      else{ addBtn.textContent='+ Add'; }
       addBtn.addEventListener('click',()=>{
-        if(!(C.otherSpells||[]).includes(name)){ C.otherSpells=[...(C.otherSpells||[]),name]; render(); }
+        if(inList||inExtra) return;
+        C.extraSpells=[...(C.extraSpells||[]),name]; render();
       });
       row.appendChild(nameSpan); row.appendChild(addBtn);
       bResults.appendChild(row);
@@ -5479,18 +5494,25 @@ function renderReview(el) {
   twoCol.appendChild(rightCol); el.appendChild(twoCol);
 
   // Spells
-  if(C.cantrips.length||C.spells1.length||(C.otherSpells||[]).length){
+  if(C.cantrips.length||C.spells1.length||(C.otherSpells||[]).length||(C.extraSpells||[]).length){
     const sc=document.createElement('div'); sc.className='card'; sc.style.marginBottom='14px';
     const clsObj=CLASSES[C.cls]||{};
     sc.innerHTML=`<div class="label" style="margin-bottom:8px;">Spells${clsObj.castAbil?` — DC ${8+profB+mmod(fs(clsObj.castAbil))}, Attack +${profB+mmod(fs(clsObj.castAbil))}`:''}  </div>`;
-    if(C.cantrips.length) { const d=document.createElement('div'); d.style.marginBottom='6px'; d.innerHTML=`<span class="muted" style="font-size:11px;">Cantrips: </span><span style="font-size:13px;">${C.cantrips.join(', ')}</span>`; sc.appendChild(d); }
-    if(C.spells1.length) { const d=document.createElement('div'); d.style.marginBottom='6px'; d.innerHTML=`<span class="muted" style="font-size:11px;">1st Level: </span><span style="font-size:13px;">${C.spells1.join(', ')}</span>`; sc.appendChild(d); }
-    // Group otherSpells by level
+    // Merge extraSpells into display by level
+    const allExtra=[...(C.extraSpells||[])];
+    const extraCantrips=allExtra.filter(n=>(SPELL_REF[n]||{}).lv===0);
+    const extraLv1=allExtra.filter(n=>(SPELL_REF[n]||{}).lv===1);
+    const allCantrips=[...C.cantrips,...extraCantrips].filter((v,i,a)=>a.indexOf(v)===i);
+    const allLv1=[...C.spells1,...extraLv1].filter((v,i,a)=>a.indexOf(v)===i);
+    if(allCantrips.length) { const d=document.createElement('div'); d.style.marginBottom='6px'; d.innerHTML=`<span class="muted" style="font-size:11px;">Cantrips: </span><span style="font-size:13px;">${allCantrips.join(', ')}</span>`; sc.appendChild(d); }
+    if(allLv1.length) { const d=document.createElement('div'); d.style.marginBottom='6px'; d.innerHTML=`<span class="muted" style="font-size:11px;">1st Level: </span><span style="font-size:13px;">${allLv1.join(', ')}</span>`; sc.appendChild(d); }
+    // Group otherSpells + higher extraSpells by level
     const otherByLv={};
-    for(const s of (C.otherSpells||[])){const lv=(SPELL_REF[s]||{}).lv;if(lv!=null&&lv>0)(otherByLv[lv]=otherByLv[lv]||[]).push(s);}
+    const combined=[...(C.otherSpells||[]),...allExtra.filter(n=>(SPELL_REF[n]||{}).lv>1)];
+    for(const s of combined){const lv=(SPELL_REF[s]||{}).lv;if(lv!=null&&lv>1)(otherByLv[lv]=otherByLv[lv]||[]).push(s);}
     const lvOrd=lv=>lv===2?'2nd':lv===3?'3rd':lv+'th';
     for(const lv of Object.keys(otherByLv).map(Number).sort((a,b)=>a-b)){
-      const d=document.createElement('div'); d.style.marginBottom='6px'; d.innerHTML=`<span class="muted" style="font-size:11px;">${lvOrd(lv)} Level: </span><span style="font-size:13px;">${otherByLv[lv].join(', ')}</span>`; sc.appendChild(d);
+      const d=document.createElement('div'); d.style.marginBottom='6px'; d.innerHTML=`<span class="muted" style="font-size:11px;">${lvOrd(lv)} Level: </span><span style="font-size:13px;">${[...new Set(otherByLv[lv])].join(', ')}</span>`; sc.appendChild(d);
     }
     if(C.spellNotes) { const d=document.createElement('div'); d.innerHTML=`<span class="muted" style="font-size:11px;">Notes: </span><span style="font-size:12px;color:var(--parchment-dim);">${C.spellNotes}</span>`; sc.appendChild(d); }
     el.appendChild(sc);
@@ -5614,7 +5636,7 @@ function renderReview(el) {
     }
 
     // Spellbook row — only for casters with spells selected
-    const allSelectedSpells = [...(C.cantrips||[]), ...(C.spells1||[]), ...(C.otherSpells||[])];
+    const allSelectedSpells = [...(C.cantrips||[]), ...(C.spells1||[]), ...(C.otherSpells||[]), ...(C.extraSpells||[])];
     if (cls.caster && allSelectedSpells.length > 0) {
       const sbRow = document.createElement('div'); sbRow.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:5px 0;cursor:pointer;';
       sbRow.addEventListener('click', () => previewSpellbook());
@@ -5675,7 +5697,7 @@ h2{font-family:'Cinzel',serif;font-size:13px;letter-spacing:.1em;color:#b8860b;t
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
 .grid6{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;}
-.box{background:rgba(184,134,11,.05);border:1px solid rgba(184,134,11,.25);border-radius:6px;padding:9px 11px;margin-bottom:12px;}
+.box{background:rgba(184,134,11,.05);border:1px solid rgba(184,134,11,.25);border-radius:6px;padding:9px 11px;margin-bottom:12px;break-inside:avoid;page-break-inside:avoid;}
 .sc{text-align:center;padding:10px 4px;border:1px solid #b8860b;border-radius:7px;background:#fffbf0;}
 .sc .n{font-family:'Cinzel Decorative',serif;font-size:23px;color:#2a1505;}
 .sc .m{font-family:'Cinzel',serif;font-size:14px;color:#b8860b;font-weight:700;}
@@ -5688,6 +5710,7 @@ h2{font-family:'Cinzel',serif;font-size:13px;letter-spacing:.1em;color:#b8860b;t
 .ct{text-align:center;}
 .cv{font-family:'Cinzel Decorative',serif;font-size:19px;color:#5a2e0a;}
 .cl{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.1em;color:#b8860b;text-transform:uppercase;margin-top:2px;}
+h2{break-after:avoid;page-break-after:avoid;}
 @media print{body{background:white;}}
 @page{size:A4;margin:0;}
 </style></head><body>
@@ -5740,12 +5763,15 @@ ${(()=>{const asiLvlsSheet=(ASI_LEVELS[C.cls]||DEFAULT_ASI_LEVELS).filter(l=>l<=
   return parts.join('<br>');
 })()}</div>
 ${(()=>{
-  const hasSpells=C.cantrips.length||C.spells1.length||(C.otherSpells||[]).length;
+  const hasSpells=C.cantrips.length||C.spells1.length||(C.otherSpells||[]).length||(C.extraSpells||[]).length;
   if(!hasSpells) return '';
   const lvlOrd=lv=>lv===1?'1st':lv===2?'2nd':lv===3?'3rd':lv+'th';
+  const sheetExtra=C.extraSpells||[];
+  const sheetCantrips=[...new Set([...C.cantrips,...sheetExtra.filter(n=>(SPELL_REF[n]||{}).lv===0)])];
+  const sheetLv1=[...new Set([...C.spells1,...sheetExtra.filter(n=>(SPELL_REF[n]||{}).lv===1)])];
   const byLevel={};
-  for(const s of (C.otherSpells||[])){const ref=SPELL_REF[s];if(ref){const l=ref.lv;(byLevel[l]||(byLevel[l]=[])).push(s);}}
-  return `<h2>Spells${cls.caster?` — Save DC ${spDC} · Attack +${spAtk}`:''}</h2><div class="box" style="font-size:12px;">${C.cantrips.length?`<div style="margin-bottom:4px;"><b>Cantrips:</b> ${C.cantrips.join(', ')}</div>`:''}${C.spells1.length?`<div style="margin-bottom:4px;"><b>1st Level:</b> ${C.spells1.join(', ')}</div>`:''}${Object.entries(byLevel).sort(([a],[b])=>a-b).map(([lv,sp])=>`<div style="margin-bottom:4px;"><b>${lvlOrd(parseInt(lv))}-Level:</b> ${sp.join(', ')}</div>`).join('')}${C.spellNotes?`<div><b>Notes:</b> ${C.spellNotes}</div>`:''}</div>`;
+  for(const s of [...(C.otherSpells||[]),...sheetExtra.filter(n=>(SPELL_REF[n]||{}).lv>1)]){const ref=SPELL_REF[s];if(ref){const l=ref.lv;(byLevel[l]||(byLevel[l]=[])).push(s);}}
+  return `<h2>Spells${cls.caster?` — Save DC ${spDC} · Attack +${spAtk}`:''}</h2><div class="box" style="font-size:12px;">${sheetCantrips.length?`<div style="margin-bottom:4px;"><b>Cantrips:</b> ${sheetCantrips.join(', ')}</div>`:''}${sheetLv1.length?`<div style="margin-bottom:4px;"><b>1st Level:</b> ${sheetLv1.join(', ')}</div>`:''}${Object.entries(byLevel).sort(([a],[b])=>a-b).map(([lv,sp])=>`<div style="margin-bottom:4px;"><b>${lvlOrd(parseInt(lv))}-Level:</b> ${[...new Set(sp)].join(', ')}</div>`).join('')}${C.spellNotes?`<div><b>Notes:</b> ${C.spellNotes}</div>`:''}</div>`;
 })()}
 ${(()=>{
   const parts=[];
@@ -5805,7 +5831,7 @@ function downloadSheet(){
   setTimeout(()=>msg.innerHTML='',8000);
 }
 
-function guideStyles(){return `<style>*{box-sizing:border-box;margin:0;padding:0;}body{background:#ede0c0;font-family:'Lora',serif;color:#2a1505;padding:20px;}.page{width:210mm;min-height:297mm;margin:0 auto;background:#fdf8ec;padding:18mm 16mm;border:1px solid #b8860b;}h1{font-family:'Cinzel Decorative',serif;font-size:20px;color:#5a2e0a;text-align:center;border-bottom:3px solid #b8860b;padding-bottom:8px;margin-bottom:16px;}h2{font-family:'Cinzel',serif;font-size:11px;letter-spacing:.1em;color:#b8860b;text-transform:uppercase;border-bottom:1px solid rgba(184,134,11,.3);padding-bottom:3px;margin:14px 0 7px;break-after:avoid;page-break-after:avoid;}.box{background:rgba(184,134,11,.05);border:1px solid rgba(184,134,11,.25);border-radius:4px;padding:8px 11px;margin-bottom:10px;font-size:12px;line-height:1.65;break-inside:avoid;page-break-inside:avoid;}.row{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;border-bottom:1px dotted rgba(184,134,11,.2);}.lbl{font-family:'Cinzel',serif;font-size:8px;color:#b8860b;text-transform:uppercase;margin-bottom:2px;}.val{font-family:'Cinzel Decorative',serif;font-size:16px;color:#2a1505;}.chip{display:inline-block;padding:2px 8px;border-radius:12px;font-size:9px;font-family:'Cinzel',serif;background:rgba(184,134,11,.12);border:1px solid rgba(184,134,11,.3);color:#5a2e0a;margin:2px;}.sk{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;border-bottom:1px dotted rgba(184,134,11,.15);}.prof{font-weight:700;color:#1a5a1a;}.fr{font-size:11px;padding:2px 0;}@media print{body{background:white;padding:0;}.page{border:none;width:auto;padding:12mm;}}@page{size:A4;margin:0;}</style>`;}
+function guideStyles(){return `<style>*{box-sizing:border-box;margin:0;padding:0;}body{background:#ede0c0;font-family:'Lora',serif;color:#2a1505;padding:20px;}.page{width:210mm;margin:0 auto;background:#fdf8ec;padding:12mm 14mm;border:1px solid #b8860b;}h1{font-family:'Cinzel Decorative',serif;font-size:20px;color:#5a2e0a;text-align:center;border-bottom:3px solid #b8860b;padding-bottom:8px;margin-bottom:16px;}h2{font-family:'Cinzel',serif;font-size:11px;letter-spacing:.1em;color:#b8860b;text-transform:uppercase;border-bottom:1px solid rgba(184,134,11,.3);padding-bottom:2px;margin:10px 0 5px;break-after:avoid;page-break-after:avoid;}.box{background:rgba(184,134,11,.05);border:1px solid rgba(184,134,11,.25);border-radius:4px;padding:6px 9px;margin-bottom:8px;font-size:11px;line-height:1.5;break-inside:avoid;page-break-inside:avoid;}.row{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;border-bottom:1px dotted rgba(184,134,11,.2);}.lbl{font-family:'Cinzel',serif;font-size:8px;color:#b8860b;text-transform:uppercase;margin-bottom:2px;}.val{font-family:'Cinzel Decorative',serif;font-size:16px;color:#2a1505;}.chip{display:inline-block;padding:2px 8px;border-radius:12px;font-size:9px;font-family:'Cinzel',serif;background:rgba(184,134,11,.12);border:1px solid rgba(184,134,11,.3);color:#5a2e0a;margin:2px;}.sk{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;border-bottom:1px dotted rgba(184,134,11,.15);}.prof{font-weight:700;color:#1a5a1a;}.fr{font-size:11px;padding:2px 0;}@media print{body{background:white;padding:0;}.page{border:none;width:auto;padding:12mm;}}@page{size:A4;margin:0;}</style>`;}
 
 function buildCombatGuide(){
   const cls=CLASSES[C.cls]||{}; const race=RACES[C.race]||{bonus:{},traits:[],spd:30};
@@ -5866,7 +5892,7 @@ function buildCombatGuide(){
 </div>
 </div>
 ${weaponAtks.length?`<h2>Weapon Attacks</h2><div class="box">${weaponAtks.map(w=>`<div class="row"><span><b>${w.name}</b> <span style="font-size:10px;color:#888;">${w.props}</span></span><span>Hit: ${w.atk} · Dmg: ${w.dmg} ${w.dmgType}</span></div>`).join('')}</div>`:''}
-${cls.caster?`<h2>Spellcasting</h2><div class="box"><div class="row"><span>Spell Save DC</span><span>${spDC}</span></div><div class="row"><span>Spell Attack Bonus</span><span>+${spAtk}</span></div>${C.cantrips.length?`<div class="row"><span>Cantrips</span><span>${C.cantrips.join(', ')}</span></div>`:''}${C.spells1.length?`<div class="row"><span>1st-Level</span><span>${C.spells1.join(', ')}</span></div>`:''}${(()=>{const lvlOrd=lv=>lv===2?'2nd':lv===3?'3rd':lv+'th';const byLv={};for(const s of (C.otherSpells||[])){const ref=SPELL_REF[s];if(ref&&ref.lv>0){(byLv[ref.lv]||(byLv[ref.lv]=[])).push(s);}}return Object.entries(byLv).sort(([a],[b])=>a-b).map(([lv,sp])=>`<div class="row"><span>${lvlOrd(parseInt(lv))}-Level</span><span>${sp.join(', ')}</span></div>`).join('');})()}</div>`:''}
+${cls.caster?`<h2>Spellcasting</h2><div class="box"><div class="row"><span>Spell Save DC</span><span>${spDC}</span></div><div class="row"><span>Spell Attack Bonus</span><span>+${spAtk}</span></div>${(()=>{const lvlOrd=lv=>lv===2?'2nd':lv===3?'3rd':lv+'th';const gx=C.extraSpells||[];const gc=[...new Set([...C.cantrips,...gx.filter(n=>(SPELL_REF[n]||{}).lv===0)])];const g1=[...new Set([...C.spells1,...gx.filter(n=>(SPELL_REF[n]||{}).lv===1)])];const byLv={};for(const s of [...(C.otherSpells||[]),...gx.filter(n=>(SPELL_REF[n]||{}).lv>1)]){const ref=SPELL_REF[s];if(ref&&ref.lv>1){(byLv[ref.lv]||(byLv[ref.lv]=[])).push(s);}}return[gc.length?`<div class="row"><span>Cantrips</span><span>${gc.join(', ')}</span></div>`:'',g1.length?`<div class="row"><span>1st-Level</span><span>${g1.join(', ')}</span></div>`:'', ...Object.entries(byLv).sort(([a],[b])=>a-b).map(([lv,sp])=>`<div class="row"><span>${lvlOrd(parseInt(lv))}-Level</span><span>${[...new Set(sp)].join(', ')}</span></div>`)].join('');})()}</div>`:''}
 ${combatFeatures.length?`<h2>Class Features (Lv 1–${C.level})</h2><div class="box">${combatFeatures.map(f=>`<div style="margin-bottom:8px;"><b style="color:#5a2e0a;">${f.name}</b>${f.desc?`<div style="font-size:11px;margin-top:2px;">${f.desc}</div>`:''}</div>`).join('')}</div>`:''}
 ${subFeatures.length?`<h2>${C.subclass} Features</h2><div class="box">${subFeatures.map(f=>`<div style="margin-bottom:8px;"><span style="font-size:9px;color:#b8860b;font-family:Cinzel,serif;">Lv${f.lvl} </span><b style="color:#5a2e0a;">${f.name}</b><div style="font-size:11px;margin-top:2px;">${f.desc}</div></div>`).join('')}</div>`:''}
 ${raceFeatures.length?`<h2>Racial Traits</h2><div class="box">${raceFeatures.map(f=>`<div style="margin-bottom:6px;"><b style="color:#5a2e0a;">${f.name}</b>${f.desc?`<div style="font-size:11px;margin-top:2px;">${f.desc}</div>`:''}</div>`).join('')}</div>`:''}
@@ -5899,7 +5925,7 @@ ${ci.backstory?`<h2>Backstory</h2><div class="box">${ci.backstory}</div>`:''}
 ${[['Age',ci.age],['Height',ci.height],['Weight',ci.weight],['Eyes',ci.eyes],['Skin',ci.skin],['Hair',ci.hair]].some(([,v])=>v)?`<h2>Appearance</h2><div class="box">${[['Age',ci.age],['Height',ci.height],['Weight',ci.weight],['Eyes',ci.eyes],['Skin',ci.skin],['Hair',ci.hair]].filter(([,v])=>v).map(([l,v])=>`<div class="row"><span>${l}</span><span>${v}</span></div>`).join('')}</div>`:''}
 <h2>Background: ${C.bg||'—'}</h2>
 <div class="box"><div class="row"><span>Skills</span><span>${bg.skills.join(', ')||'—'}</span></div><div class="row"><span>Feature</span><span>${bg.feature||'—'}</span></div></div>
-${cls.caster?`<h2>Spells</h2><div class="box">${C.cantrips.length?`<div class="row"><span>Cantrips</span><span>${C.cantrips.join(', ')}</span></div>`:''}${C.spells1.length?`<div class="row"><span>1st-Level</span><span>${C.spells1.join(', ')}</span></div>`:''}${(()=>{const lvlOrd=lv=>lv===2?'2nd':lv===3?'3rd':lv+'th';const byLv={};for(const s of (C.otherSpells||[])){const ref=SPELL_REF[s];if(ref&&ref.lv>0){(byLv[ref.lv]||(byLv[ref.lv]=[])).push(s);}}return Object.entries(byLv).sort(([a],[b])=>a-b).map(([lv,sp])=>`<div class="row"><span>${lvlOrd(parseInt(lv))}-Level</span><span>${sp.join(', ')}</span></div>`).join('');})()}${C.spellNotes?`<div class="row"><span>Notes</span><span>${C.spellNotes}</span></div>`:''}</div>`:''}
+${cls.caster?`<h2>Spells</h2><div class="box">${(()=>{const lvlOrd=lv=>lv===2?'2nd':lv===3?'3rd':lv+'th';const gx=C.extraSpells||[];const gc=[...new Set([...C.cantrips,...gx.filter(n=>(SPELL_REF[n]||{}).lv===0)])];const g1=[...new Set([...C.spells1,...gx.filter(n=>(SPELL_REF[n]||{}).lv===1)])];const byLv={};for(const s of [...(C.otherSpells||[]),...gx.filter(n=>(SPELL_REF[n]||{}).lv>1)]){const ref=SPELL_REF[s];if(ref&&ref.lv>1){(byLv[ref.lv]||(byLv[ref.lv]=[])).push(s);}}return[gc.length?`<div class="row"><span>Cantrips</span><span>${gc.join(', ')}</span></div>`:'',g1.length?`<div class="row"><span>1st-Level</span><span>${g1.join(', ')}</span></div>`:'', ...Object.entries(byLv).sort(([a],[b])=>a-b).map(([lv,sp])=>`<div class="row"><span>${lvlOrd(parseInt(lv))}-Level</span><span>${[...new Set(sp)].join(', ')}</span></div>`)].join('');})()}${C.spellNotes?`<div class="row"><span>Notes</span><span>${C.spellNotes}</span></div>`:''}</div>`:''}
 ${classFeats.length?`<h2>Class Features (Lv 1–${C.level})</h2><div class="box">${classFeats.map(f=>`<div style="margin-bottom:8px;"><b style="color:#5a2e0a;">${f.name}</b>${f.desc?`<div style="font-size:11px;margin-top:2px;">${f.desc}</div>`:''}</div>`).join('')}</div>`:''}
 ${subFeatures.length?`<h2>${C.subclass} Features</h2><div class="box">${subFeatures.map(f=>`<div style="margin-bottom:8px;"><span style="font-size:9px;color:#b8860b;font-family:Cinzel,serif;">Lv${f.lvl} </span><b style="color:#5a2e0a;">${f.name}</b><div style="font-size:11px;margin-top:2px;">${f.desc}</div></div>`).join('')}</div>`:''}
 ${raceFeatures.length?`<h2>Racial Traits</h2><div class="box">${raceFeatures.map(f=>`<div style="margin-bottom:6px;"><b style="color:#5a2e0a;">${f.name}</b>${f.desc?`<div style="font-size:11px;margin-top:2px;">${f.desc}</div>`:''}</div>`).join('')}</div>`:''}
@@ -5951,13 +5977,23 @@ ${classFeats.length?`<h2>Class Features (Lv 1–${C.level})</h2><div class="box"
 ${subFeatures.length?`<h2>${C.subclass} Features</h2><div class="box">${subFeatures.map(f=>`<div style="margin-bottom:10px;"><span style="font-size:9px;color:#b8860b;font-family:Cinzel,serif;">Lv${f.lvl} </span><b style="color:#5a2e0a;">${f.name}</b><div style="font-size:11px;margin-top:3px;line-height:1.6;">${f.desc}</div></div>`).join('')}</div>`:''}
 ${raceFeatures.length?`<h2>Racial Traits</h2><div class="box">${raceFeatures.map(f=>`<div style="margin-bottom:8px;"><b style="color:#5a2e0a;">${f.name}</b>${f.desc?`<div style="font-size:11px;margin-top:3px;line-height:1.6;">${f.desc}</div>`:''}</div>`).join('')}</div>`:''}
 ${featData.length?`<h2>Feats</h2><div class="box">${featData.map(f=>`<div style="margin-bottom:8px;"><b style="color:#5a2e0a;">${f.name}</b><div style="font-size:11px;margin-top:3px;line-height:1.6;">${f.desc}</div></div>`).join('')}</div>`:''}
-${cls.caster?`<h2>Spells</h2><div class="box">${C.cantrips.length?`<div class="row"><span>Cantrips</span><span>${C.cantrips.join(', ')}</span></div>`:''}${C.spells1.length?`<div class="row"><span>1st-Level</span><span>${C.spells1.join(', ')}</span></div>`:''}${(()=>{const lvlOrd=lv=>lv===2?'2nd':lv===3?'3rd':lv+'th';const byLv={};for(const s of (C.otherSpells||[])){const ref=SPELL_REF[s];if(ref&&ref.lv>0){(byLv[ref.lv]||(byLv[ref.lv]=[])).push(s);}}return Object.entries(byLv).sort(([a],[b])=>a-b).map(([lv,sp])=>`<div class="row"><span>${lvlOrd(parseInt(lv))}-Level</span><span>${sp.join(', ')}</span></div>`).join('');})()}</div>`:''}
+${cls.caster?`<h2>Spells</h2><div class="box">${(()=>{const lvlOrd=lv=>lv===2?'2nd':lv===3?'3rd':lv+'th';const gx=C.extraSpells||[];const gc=[...new Set([...C.cantrips,...gx.filter(n=>(SPELL_REF[n]||{}).lv===0)])];const g1=[...new Set([...C.spells1,...gx.filter(n=>(SPELL_REF[n]||{}).lv===1)])];const byLv={};for(const s of [...(C.otherSpells||[]),...gx.filter(n=>(SPELL_REF[n]||{}).lv>1)]){const ref=SPELL_REF[s];if(ref&&ref.lv>1){(byLv[ref.lv]||(byLv[ref.lv]=[])).push(s);}}return[gc.length?`<div class="row"><span>Cantrips</span><span>${gc.join(', ')}</span></div>`:'',g1.length?`<div class="row"><span>1st-Level</span><span>${g1.join(', ')}</span></div>`:'', ...Object.entries(byLv).sort(([a],[b])=>a-b).map(([lv,sp])=>`<div class="row"><span>${lvlOrd(parseInt(lv))}-Level</span><span>${[...new Set(sp)].join(', ')}</span></div>`)].join('');})()}</div>`:''}
 <h2>Equipment</h2>
 <div class="box">${C.useGold==='gold'?`<div class="row"><span>Starting Gold</span><span>${C.goldAmount||STARTING_GOLD[C.cls]||'—'}</span></div>`:C.useGold==='hybrid'?`<div class="row"><span>Equipment Package</span><span>${resolveEquip()||'—'}</span></div><div class="row"><span>Extra Gold Budget</span><span>${C.hybridGold||'—'}</span></div>`:``}${C.useGold!=='gold'?`<div style="margin-top:6px;font-size:12px;">${equipDetail}</div>`:''} ${C.extraEquip?`<div style="margin-top:6px;font-size:12px;"><b>Additional:</b> ${C.extraEquip}</div>`:''} ${purchItems.length?`<div style="margin-top:8px;"><b>Purchased Items:</b></div>${purchItems.map(i=>`<div class="row"><span>${i.name}</span><span>${i.cost||'—'} gp</span></div>`).join('')}`:''}</div>
 </div></body></html>`;
 }
 
-function _guideHtml(type){return type==='combat'?buildCombatGuide():type==='rp'?buildRPGuide():buildGeneralGuide();}
+function _guideHtml(type){
+  const html=type==='combat'?buildCombatGuide():type==='rp'?buildRPGuide():buildGeneralGuide();
+  // Inject auto-scale script: measures rendered page height and zooms to fit A4
+  const scaleScript=`<script>window.addEventListener('load',function(){
+  var p=document.querySelector('.page');if(!p)return;
+  var a4=297*(96/25.4);
+  var h=p.scrollHeight;
+  if(h>a4){var z=a4/h;p.style.zoom=z.toFixed(4);document.body.style.overflow='hidden';}
+});<\/script>`;
+  return html.replace('</body>',scaleScript+'</body>');
+}
 function previewGuide(type){
   const html=_guideHtml(type);
   const w=window.open('','_blank','width=900,height=1100');
@@ -6012,7 +6048,8 @@ function buildSpellbook() {
     ...(C.cantrips || []).map(n => ({name:n, data:SPELL_REF[n]})),
     ...(C.spells1  || []).map(n => ({name:n, data:SPELL_REF[n]})),
     ...(C.otherSpells || []).map(n => ({name:n, data:SPELL_REF[n]})),
-  ].filter(s => s.data);
+    ...(C.extraSpells || []).map(n => ({name:n, data:SPELL_REF[n]})),
+  ].filter(s => s.data).filter((s,i,a)=>a.findIndex(x=>x.name===s.name)===i); // dedupe
 
   if (!allSpells.length) return null;
 
@@ -6240,9 +6277,13 @@ async function fillAndDownloadPDF(fileName) {
       const spDC = 8+profB+mmod(fs(cls.castAbil||'INT'));
       const spAtk = profB+mmod(fs(cls.castAbil||'INT'));
       const parts = [`Spellcasting: ${cls.castAbil} · Save DC ${spDC} · Atk +${spAtk}`];
-      if (C.cantrips.length) parts.push('Cantrips: '+C.cantrips.join(', '));
-      if (C.spells1.length) parts.push('1st Level: '+C.spells1.join(', '));
-      if ((C.otherSpells||[]).length) parts.push('Other: '+C.otherSpells.join(', '));
+      const pdfEx=C.extraSpells||[];
+      const pdfCantrips=[...new Set([...C.cantrips,...pdfEx.filter(n=>(SPELL_REF[n]||{}).lv===0)])];
+      const pdfLv1=[...new Set([...C.spells1,...pdfEx.filter(n=>(SPELL_REF[n]||{}).lv===1)])];
+      const pdfOther=[...new Set([...(C.otherSpells||[]),...pdfEx.filter(n=>(SPELL_REF[n]||{}).lv>1)])];
+      if (pdfCantrips.length) parts.push('Cantrips: '+pdfCantrips.join(', '));
+      if (pdfLv1.length) parts.push('1st Level: '+pdfLv1.join(', '));
+      if (pdfOther.length) parts.push('Other: '+pdfOther.join(', '));
       spellText = parts.join('\n');
     }
 
@@ -6417,27 +6458,30 @@ async function fillAndDownloadPDF(fileName) {
 
       // Spell lines: cantrips (1014-1021), 1st (1022-1033), 2nd (1034-1046), ...
       // Layout: cantrips=8, lv1=12, lv2=13, lv3=13, lv4=13, lv5=9, lv6=9, lv7=9, lv8=7, lv9=7
+      const pdfAllCantrips=[...new Set([...(C.cantrips||[]),...(C.extraSpells||[]).filter(n=>(SPELL_REF[n]||{}).lv===0)])];
+      const pdfAllLv1=[...new Set([...(C.spells1||[]),...(C.extraSpells||[]).filter(n=>(SPELL_REF[n]||{}).lv===1)])];
+      const pdfAllOther=[...new Set([...(C.otherSpells||[]),...(C.extraSpells||[]).filter(n=>(SPELL_REF[n]||{}).lv>1)])];
       const spellGroups = [
-        { spells: C.cantrips||[],     start: 1014,  max: 8  },
-        { spells: C.spells1||[],      start: 1022,  max: 12 },
-        { spells: C.otherSpells||[], start: 1034,  max: 86 }, // overflow all remaining levels
+        { spells: pdfAllCantrips, start: 1014, max: 8  },
+        { spells: pdfAllLv1,      start: 1022, max: 12 },
+        { spells: pdfAllOther,    start: 1034, max: 86 },
       ];
       const intToField = n => n >= 10100 ? 'Spells 1' + String(n).slice(1) : 'Spells ' + n;
       let slot = 1014;
       const cantripEnd = 1021;
-      for (let i = 0; i < (C.cantrips||[]).length && slot <= cantripEnd; i++, slot++) {
-        tx(intToField(slot), C.cantrips[i]);
+      for (let i = 0; i < pdfAllCantrips.length && slot <= cantripEnd; i++, slot++) {
+        tx(intToField(slot), pdfAllCantrips[i]);
         cb('Check Box '+(3010+i), true);
       }
       slot = 1022;
-      for (let i = 0; i < (C.spells1||[]).length && slot <= 1033; i++, slot++) {
-        tx(intToField(slot), C.spells1[i]);
+      for (let i = 0; i < pdfAllLv1.length && slot <= 1033; i++, slot++) {
+        tx(intToField(slot), pdfAllLv1[i]);
         cb('Check Box '+(3018+i), true);
       }
       slot = 1034;
-      for (let i = 0; i < (C.otherSpells||[]).length; i++, slot++) {
+      for (let i = 0; i < pdfAllOther.length; i++, slot++) {
         if (slot > 10113) break;
-        tx(intToField(slot), C.otherSpells[i]);
+        tx(intToField(slot), pdfAllOther[i]);
       }
     }
 
