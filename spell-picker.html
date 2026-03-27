@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D&D 5e Spell Reference & Picker</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<script src="lib/pdf.min.js"></script>
+<script src="lib/pdf-lib.min.js"></script>
+<style>
+:root {
+  --gold: #c9a84c;
+  --gold-dim: rgba(201,168,76,0.3);
+  --parchment: #f0dab0;
+  --parchment-dim: #9a8060;
+  --bg: #0e0705;
+  --card-bg: rgba(20,10,5,0.85);
+  --border: rgba(184,134,11,0.3);
+  --border-hover: rgba(184,134,11,0.6);
+  --red: #c94c4c;
+  --green: #4caa6a;
+  --purple: #9070cc;
+  --sch-abjur: #4a90d9;
+  --sch-conj: #e8a020;
+  --sch-div: #90c8e0;
+  --sch-ench: #d070b0;
+  --sch-evoc: #e04040;
+  --sch-illus: #9060c8;
+  --sch-necro: #50a050;
+  --sch-trans: #c07820;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: linear-gradient(135deg, #0e0705 0%, #160c05 60%, #0a0603 100%);
+  min-height: 100vh;
+  font-family: 'Lora', serif;
+  color: var(--parchment);
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(ellipse at 20% 20%, rgba(201,168,76,0.04) 0%, transparent 60%),
+                    radial-gradient(ellipse at 80% 80%, rgba(184,100,30,0.04) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Layout ─────────────────────────────────────────── */
+#app { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 16px 12px 60px; }
+
+/* ── Header ─────────────────────────────────────────── */
+.app-header {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.app-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: clamp(15px, 3vw, 24px);
+  color: var(--gold);
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 40px rgba(201,168,76,0.25);
+}
+.back-link {
+  font-family: 'Cinzel', serif; font-size: 11px; color: var(--parchment-dim);
+  text-decoration: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 10px; transition: all 0.2s; white-space: nowrap;
+}
+.back-link:hover { color: var(--gold); border-color: var(--border-hover); }
+.header-right { display: flex; align-items: center; gap: 14px; }
+.bw-toggle-wrap { display: flex; align-items: center; gap: 7px; font-family: 'Cinzel', serif; font-size: 11px; color: var(--parchment-dim); cursor: pointer; user-select: none; }
+.bw-toggle-wrap input { accent-color: var(--gold); width: 14px; height: 14px; }
+
+/* ── Tabs ───────────────────────────────────────────── */
+.tab-bar { display: flex; gap: 4px; margin-bottom: 16px; }
+.tab-btn {
+  font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.06em;
+  padding: 8px 18px; border-radius: 6px 6px 0 0; cursor: pointer;
+  border: 1px solid var(--border); border-bottom: none;
+  background: rgba(20,10,5,0.5); color: var(--parchment-dim);
+  transition: all 0.2s;
+}
+.tab-btn:hover { color: var(--gold); border-color: var(--border-hover); }
+.tab-btn.active { background: var(--card-bg); color: var(--gold); border-color: var(--gold-dim); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Shared card ────────────────────────────────────── */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  backdrop-filter: blur(4px);
+}
+.section-label {
+  font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.12em;
+  color: var(--gold); text-transform: uppercase; margin-bottom: 8px;
+}
+
+/* ── Character Bar ──────────────────────────────────── */
+#char-bar {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;
+  padding: 12px 14px; margin-bottom: 12px;
+  background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
+}
+.cb-group { display: flex; flex-direction: column; gap: 4px; }
+.cb-label { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.1em; color: var(--gold); text-transform: uppercase; }
+.cb-input, .cb-select {
+  background: rgba(10,5,0,0.7); border: 1px solid var(--border);
+  color: var(--parchment); font-family: 'Lora', serif; font-size: 13px;
+  border-radius: 5px; padding: 5px 8px; outline: none; transition: border-color 0.2s;
+}
+.cb-input:focus, .cb-select:focus { border-color: var(--border-hover); }
+.cb-input { width: 160px; }
+.cb-select { min-width: 120px; }
+.cb-input.narrow { width: 70px; }
+.prepared-display {
+  background: rgba(201,168,76,0.08); border: 1px solid var(--gold-dim);
+  border-radius: 5px; padding: 5px 12px; font-family: 'Cinzel', serif;
+  font-size: 13px; color: var(--gold); white-space: nowrap;
+  display: flex; align-items: center; gap: 8px;
+}
+.prepared-display .prep-fraction { font-size: 16px; font-weight: 700; }
+.prepared-display .prep-note { font-size: 9px; color: var(--parchment-dim); letter-spacing: 0.05em; }
+.import-btn {
+  font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.05em;
+  padding: 6px 14px; border-radius: 5px; cursor: pointer;
+  background: rgba(201,168,76,0.1); border: 1px solid var(--gold-dim);
+  color: var(--gold); transition: all 0.2s; white-space: nowrap;
+}
+.import-btn:hover { background: rgba(201,168,76,0.2); border-color: var(--gold); }
+
+/* ── Filter Bar ─────────────────────────────────────── */
+#filter-bar {
+  padding: 12px 14px; margin-bottom: 12px;
+  background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
+}
+.filter-toggle-btn {
+  display: none; width: 100%; font-family: 'Cinzel', serif; font-size: 11px;
+  letter-spacing: 0.08em; padding: 7px 12px; border-radius: 5px; cursor: pointer;
+  background: rgba(201,168,76,0.07); border: 1px solid var(--border);
+  color: var(--parchment-dim); text-align: left; transition: all 0.2s;
+  justify-content: space-between; align-items: center;
+}
+.filter-toggle-btn:hover { color: var(--gold); border-color: var(--border-hover); }
+#filter-body { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+.filter-group { display: flex; flex-direction: column; gap: 6px; }
+.filter-group-label { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.1em; color: var(--gold); text-transform: uppercase; }
+.cb-row { display: flex; flex-wrap: wrap; gap: 4px; }
+.cb-chip {
+  display: flex; align-items: center; gap: 4px; cursor: pointer;
+  padding: 3px 8px; border-radius: 4px; font-size: 11px;
+  border: 1px solid var(--border); color: var(--parchment-dim);
+  transition: all 0.18s; user-select: none; white-space: nowrap;
+}
+.cb-chip:hover { border-color: var(--border-hover); color: var(--parchment); }
+.cb-chip.checked { border-color: var(--gold-dim); color: var(--gold); background: rgba(201,168,76,0.1); }
+.sch-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.toggle-chip {
+  padding: 4px 12px; border-radius: 12px; font-size: 11px; font-family: 'Cinzel', serif;
+  border: 1px solid var(--border); color: var(--parchment-dim); cursor: pointer;
+  transition: all 0.18s; user-select: none;
+}
+.toggle-chip.on { background: rgba(201,168,76,0.15); border-color: var(--gold-dim); color: var(--gold); }
+.filter-select {
+  background: rgba(10,5,0,0.7); border: 1px solid var(--border);
+  color: var(--parchment); font-family: 'Lora', serif; font-size: 12px;
+  border-radius: 5px; padding: 4px 8px; outline: none; min-width: 140px;
+}
+.search-input {
+  background: rgba(10,5,0,0.7); border: 1px solid var(--border);
+  color: var(--parchment); font-family: 'Lora', serif; font-size: 13px;
+  border-radius: 5px; padding: 5px 10px; outline: none; width: 200px;
+  transition: border-color 0.2s;
+}
+.search-input:focus { border-color: var(--border-hover); }
+.search-input::placeholder { color: var(--parchment-dim); }
+
+/* ── Two-panel ──────────────────────────────────────── */
+#two-panel { display: flex; gap: 12px; align-items: flex-start; }
+#browse-panel { flex: 1; min-width: 0; }
+#spellbook-panel { width: 320px; flex-shrink: 0; position: sticky; top: 10px; max-height: calc(100vh - 20px); display: flex; flex-direction: column; }
+.panel-header { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.panel-title { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.08em; color: var(--gold); text-transform: uppercase; }
+#browse-list { max-height: calc(100vh - 280px); overflow-y: auto; }
+#browse-list::-webkit-scrollbar { width: 5px; }
+#browse-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.spell-count { font-size: 11px; color: var(--parchment-dim); }
+
+/* ── Spell Row ──────────────────────────────────────── */
+.spell-row {
+  display: flex; align-items: flex-start; gap: 10px; padding: 9px 14px;
+  border-bottom: 1px solid rgba(184,134,11,0.1); cursor: pointer;
+  transition: background 0.15s; position: relative;
+}
+.spell-row:hover { background: rgba(201,168,76,0.05); }
+.spell-row.in-book { opacity: 0.45; }
+.spell-row.expanded { background: rgba(201,168,76,0.04); }
+.spell-info { flex: 1; min-width: 0; }
+.spell-name-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.spell-name { font-size: 14px; font-weight: 600; color: var(--parchment); }
+.spell-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 3px; }
+.spell-meta-item { font-size: 11px; color: var(--parchment-dim); }
+.badge {
+  font-size: 9px; font-family: 'Cinzel', serif; letter-spacing: 0.05em;
+  padding: 1px 5px; border-radius: 3px; flex-shrink: 0;
+}
+.badge-conc { background: rgba(144,112,204,0.2); color: var(--purple); border: 1px solid rgba(144,112,204,0.4); }
+.badge-rit { background: rgba(76,170,106,0.15); color: var(--green); border: 1px solid rgba(76,170,106,0.35); }
+.badge-src { background: rgba(201,168,76,0.08); color: var(--parchment-dim); border: 1px solid var(--border); }
+.school-badge {
+  font-size: 9px; font-family: 'Cinzel', serif; letter-spacing: 0.04em;
+  padding: 2px 7px; border-radius: 3px; flex-shrink: 0; color: #fff;
+  font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+.lv-badge {
+  font-size: 10px; font-family: 'Cinzel', serif; color: var(--gold);
+  padding: 1px 5px; border: 1px solid var(--gold-dim); border-radius: 3px; flex-shrink: 0;
+}
+.add-btn {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 4px;
+  background: rgba(201,168,76,0.1); border: 1px solid var(--gold-dim);
+  color: var(--gold); font-size: 16px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; transition: all 0.2s;
+  line-height: 1;
+}
+.add-btn:hover { background: rgba(201,168,76,0.25); border-color: var(--gold); }
+.add-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.spell-desc-expand {
+  margin-top: 8px; font-size: 12px; color: var(--parchment-dim); line-height: 1.6;
+  border-top: 1px solid rgba(184,134,11,0.1); padding-top: 8px;
+  display: none;
+}
+.spell-row.expanded .spell-desc-expand { display: block; }
+
+/* ── Spellbook Panel ─────────────────────────────────── */
+#spellbook-panel .card { height: 100%; overflow: hidden; display: flex; flex-direction: column; padding: 0; }
+.sb-scroll { flex: 1; overflow-y: auto; padding: 0 14px 10px; }
+.sb-scroll::-webkit-scrollbar { width: 4px; }
+.sb-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.sb-level-group { margin-bottom: 12px; }
+.sb-level-header {
+  font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.1em;
+  color: var(--gold); text-transform: uppercase; margin: 10px 0 5px;
+  display: flex; align-items: center; gap: 6px;
+}
+.sb-level-header::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.sb-spell-row {
+  display: flex; align-items: center; gap: 8px; padding: 4px 0;
+  border-bottom: 1px solid rgba(184,134,11,0.07); font-size: 12px;
+}
+.sb-spell-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-remove-btn {
+  flex-shrink: 0; width: 20px; height: 20px; border-radius: 3px;
+  background: rgba(201,76,76,0.1); border: 1px solid rgba(201,76,76,0.3);
+  color: var(--red); font-size: 14px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; transition: all 0.15s; line-height: 1;
+}
+.sb-remove-btn:hover { background: rgba(201,76,76,0.25); }
+.granted-section { padding: 8px 14px 12px; border-top: 1px solid var(--border); }
+.granted-title { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.1em; color: var(--parchment-dim); text-transform: uppercase; margin-bottom: 6px; }
+.granted-item { font-size: 11px; color: var(--parchment-dim); margin-bottom: 3px; display: flex; gap: 6px; }
+.granted-item-name { color: var(--parchment); }
+.granted-item-note { font-style: italic; color: var(--parchment-dim); font-size: 10px; }
+
+/* ── Export Bar ─────────────────────────────────────── */
+#export-bar {
+  padding: 10px 14px; border-top: 1px solid var(--border);
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.export-btn {
+  font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.05em;
+  padding: 5px 10px; border-radius: 4px; cursor: pointer;
+  background: rgba(201,168,76,0.08); border: 1px solid var(--border);
+  color: var(--parchment-dim); transition: all 0.2s; white-space: nowrap;
+}
+.export-btn:hover { background: rgba(201,168,76,0.18); border-color: var(--border-hover); color: var(--gold); }
+
+/* ── Prepared counter ────────────────────────────────── */
+.prep-bar {
+  padding: 8px 14px 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.prep-count {
+  font-family: 'Cinzel', serif; font-size: 13px; color: var(--gold);
+}
+.prep-over { color: var(--red); }
+.prep-sub { font-size: 10px; color: var(--parchment-dim); }
+
+/* ── Mobile toggle ─────────────────────────────────── */
+#mobile-view-toggle { display: none; gap: 6px; margin-bottom: 10px; }
+.mv-btn {
+  flex: 1; padding: 8px; border-radius: 6px; font-family: 'Cinzel', serif;
+  font-size: 11px; letter-spacing: 0.06em; cursor: pointer;
+  border: 1px solid var(--border); background: var(--card-bg); color: var(--parchment-dim);
+  transition: all 0.2s;
+}
+.mv-btn.active { background: rgba(201,168,76,0.15); border-color: var(--gold-dim); color: var(--gold); }
+
+/* ── Tab 2 ──────────────────────────────────────────── */
+#tab2-controls {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;
+  padding: 14px; margin-bottom: 12px;
+  background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
+}
+.t2-btn {
+  font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.06em;
+  padding: 7px 20px; border-radius: 5px; cursor: pointer;
+  background: rgba(201,168,76,0.12); border: 1px solid var(--gold-dim);
+  color: var(--gold); transition: all 0.2s;
+}
+.t2-btn:hover { background: rgba(201,168,76,0.25); }
+
+/* ── Modal ──────────────────────────────────────────── */
+#modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.75); align-items: center; justify-content: center;
+}
+#modal-overlay.open { display: flex; }
+.modal-box {
+  background: linear-gradient(160deg, #1a0c05, #120805);
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 24px; max-width: 480px; width: 92%; position: relative;
+}
+.modal-title { font-family: 'Cinzel', serif; font-size: 15px; color: var(--gold); margin-bottom: 16px; }
+.modal-close {
+  position: absolute; top: 14px; right: 14px; width: 28px; height: 28px;
+  background: rgba(201,76,76,0.1); border: 1px solid rgba(201,76,76,0.3);
+  border-radius: 4px; color: var(--red); font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+}
+.modal-close:hover { background: rgba(201,76,76,0.25); }
+.drop-zone {
+  border: 2px dashed var(--border); border-radius: 8px; padding: 32px;
+  text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 12px;
+}
+.drop-zone.drag-over { border-color: var(--gold); background: rgba(201,168,76,0.07); }
+.drop-zone-label { font-size: 13px; color: var(--parchment-dim); margin-bottom: 8px; }
+.drop-zone-sub { font-size: 11px; color: var(--parchment-dim); font-style: italic; }
+.modal-file-input { display: none; }
+.modal-status { font-size: 12px; color: var(--parchment-dim); margin-top: 10px; min-height: 18px; }
+.modal-status.ok { color: var(--green); }
+.modal-status.err { color: var(--red); }
+
+/* ── B&W mode ────────────────────────────────────────── */
+body[data-bw] .school-badge { background: #666 !important; color: #eee !important; }
+body[data-bw] .sch-dot { background: #777 !important; }
+
+/* ── School colors ───────────────────────────────────── */
+.sch-Abjur  { background: var(--sch-abjur); }
+.sch-Conj   { background: var(--sch-conj); }
+.sch-Div    { background: var(--sch-div); color: #1a1a2e !important; }
+.sch-Ench   { background: var(--sch-ench); }
+.sch-Evoc   { background: var(--sch-evoc); }
+.sch-Illus  { background: var(--sch-illus); }
+.sch-Necro  { background: var(--sch-necro); }
+.sch-Trans  { background: var(--sch-trans); }
+.dot-Abjur  { background: var(--sch-abjur); }
+.dot-Conj   { background: var(--sch-conj); }
+.dot-Div    { background: var(--sch-div); }
+.dot-Ench   { background: var(--sch-ench); }
+.dot-Evoc   { background: var(--sch-evoc); }
+.dot-Illus  { background: var(--sch-illus); }
+.dot-Necro  { background: var(--sch-necro); }
+.dot-Trans  { background: var(--sch-trans); }
+
+/* ── Responsive ─────────────────────────────────────── */
+@media (max-width: 900px) {
+  #spellbook-panel { width: 280px; }
+}
+@media (max-width: 768px) {
+  #mobile-view-toggle { display: flex; }
+  #filter-bar .filter-toggle-btn { display: flex; }
+  #filter-body.collapsed { display: none; }
+  #two-panel { display: block; }
+  #browse-panel, #spellbook-panel { width: 100%; position: static; max-height: none; }
+  #browse-panel.hidden, #spellbook-panel.hidden { display: none; }
+  #browse-list { max-height: 65vh; }
+  #spellbook-panel .card { max-height: 70vh; }
+  .cb-input { width: 130px; }
+}
+@media (max-width: 480px) {
+  #char-bar { gap: 8px; }
+  .cb-input { width: 100%; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <div class="app-header">
+    <div class="header-left">
+      <a href="index.html" class="back-link">&#8592; Home</a>
+      <div class="app-title">Spell Reference &amp; Picker</div>
+    </div>
+    <div class="header-right">
+      <label class="bw-toggle-wrap">
+        <input type="checkbox" id="bw-toggle"> B&amp;W Mode
+      </label>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab(1)">Spellbook Builder</button>
+    <button class="tab-btn" onclick="switchTab(2)">Complete Class Spellbook</button>
+  </div>
+
+  <!-- ══ TAB 1 ══ -->
+  <div id="tab1" class="tab-panel active">
+
+    <!-- Character Bar -->
+    <div id="char-bar">
+      <div class="cb-group">
+        <div class="cb-label">Character Name</div>
+        <input type="text" id="char-name" class="cb-input" placeholder="Elara Moonwhisper">
+      </div>
+      <div class="cb-group">
+        <div class="cb-label">Class</div>
+        <select id="char-class" class="cb-select" onchange="onCharChange()">
+          <option value="">— Select Class —</option>
+          <option>Artificer</option><option>Bard</option><option>Cleric</option>
+          <option>Druid</option><option>Paladin</option><option>Ranger</option>
+          <option>Sorcerer</option><option>Warlock</option><option>Wizard</option>
+        </select>
+      </div>
+      <div class="cb-group">
+        <div class="cb-label">Level</div>
+        <select id="char-level" class="cb-select" style="min-width:80px" onchange="onCharChange()">
+          <option value="">—</option>
+          <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+          <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+          <option>11</option><option>12</option><option>13</option><option>14</option><option>15</option>
+          <option>16</option><option>17</option><option>18</option><option>19</option><option>20</option>
+        </select>
+      </div>
+      <div class="cb-group">
+        <div class="cb-label">Casting Ability</div>
+        <select id="char-ability" class="cb-select" style="min-width:90px" onchange="onCharChange()">
+          <option value="">—</option>
+          <option value="INT">INT</option><option value="WIS">WIS</option><option value="CHA">CHA</option>
+        </select>
+      </div>
+      <div class="cb-group">
+        <div class="cb-label">Ability Score</div>
+        <input type="number" id="char-ability-score" class="cb-input narrow" placeholder="16" min="1" max="30" onchange="onCharChange()">
+      </div>
+      <div class="cb-group">
+        <div class="cb-label">Subclass</div>
+        <input type="text" id="char-subclass" class="cb-input" placeholder="Life Domain" oninput="onSubclassChange()">
+      </div>
+      <div class="cb-group">
+        <div class="cb-label">Race</div>
+        <input type="text" id="char-race" class="cb-input" placeholder="Tiefling" oninput="renderGranted()">
+      </div>
+      <div id="prep-display" class="prepared-display" style="display:none">
+        <div>
+          <div class="prep-fraction"><span id="prep-used">0</span> / <span id="prep-max">—</span></div>
+          <div class="prep-note">Prepared Spells</div>
+        </div>
+      </div>
+      <button class="import-btn" onclick="openImportModal()">&#128196; Import Sheet</button>
+    </div>
+
+    <!-- Filter Bar -->
+    <div id="filter-bar">
+      <button class="filter-toggle-btn" id="filter-toggle-btn" onclick="toggleFilters()">
+        <span>Filter Spells</span><span id="filter-toggle-arrow">&#9660;</span>
+      </button>
+      <div id="filter-body">
+        <div class="filter-group">
+          <div class="filter-group-label">Class</div>
+          <select id="f-class" class="filter-select" onchange="applyFilters()">
+            <option value="">All Classes</option>
+            <option>Artificer</option><option>Bard</option><option>Cleric</option>
+            <option>Druid</option><option>Paladin</option><option>Ranger</option>
+            <option>Sorcerer</option><option>Warlock</option><option>Wizard</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-label">Level</div>
+          <div class="cb-row" id="f-levels">
+            <label class="cb-chip checked" data-lv="0"><input type="checkbox" checked hidden>Cantrip</label>
+            <label class="cb-chip checked" data-lv="1"><input type="checkbox" checked hidden>1st</label>
+            <label class="cb-chip checked" data-lv="2"><input type="checkbox" checked hidden>2nd</label>
+            <label class="cb-chip checked" data-lv="3"><input type="checkbox" checked hidden>3rd</label>
+            <label class="cb-chip checked" data-lv="4"><input type="checkbox" checked hidden>4th</label>
+            <label class="cb-chip checked" data-lv="5"><input type="checkbox" checked hidden>5th</label>
+            <label class="cb-chip checked" data-lv="6"><input type="checkbox" checked hidden>6th</label>
+            <label class="cb-chip checked" data-lv="7"><input type="checkbox" checked hidden>7th</label>
+            <label class="cb-chip checked" data-lv="8"><input type="checkbox" checked hidden>8th</label>
+            <label class="cb-chip checked" data-lv="9"><input type="checkbox" checked hidden>9th</label>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-label">School</div>
+          <div class="cb-row" id="f-schools">
+            <label class="cb-chip checked" data-sch="Abjur"><input type="checkbox" checked hidden><span class="sch-dot dot-Abjur"></span>Abjuration</label>
+            <label class="cb-chip checked" data-sch="Conj"><input type="checkbox" checked hidden><span class="sch-dot dot-Conj"></span>Conjuration</label>
+            <label class="cb-chip checked" data-sch="Div"><input type="checkbox" checked hidden><span class="sch-dot dot-Div"></span>Divination</label>
+            <label class="cb-chip checked" data-sch="Ench"><input type="checkbox" checked hidden><span class="sch-dot dot-Ench"></span>Enchantment</label>
+            <label class="cb-chip checked" data-sch="Evoc"><input type="checkbox" checked hidden><span class="sch-dot dot-Evoc"></span>Evocation</label>
+            <label class="cb-chip checked" data-sch="Illus"><input type="checkbox" checked hidden><span class="sch-dot dot-Illus"></span>Illusion</label>
+            <label class="cb-chip checked" data-sch="Necro"><input type="checkbox" checked hidden><span class="sch-dot dot-Necro"></span>Necromancy</label>
+            <label class="cb-chip checked" data-sch="Trans"><input type="checkbox" checked hidden><span class="sch-dot dot-Trans"></span>Transmutation</label>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-label">Properties</div>
+          <div class="cb-row">
+            <span class="toggle-chip" id="f-conc" onclick="toggleFilter('conc')">Concentration</span>
+            <span class="toggle-chip" id="f-rit" onclick="toggleFilter('rit')">Ritual</span>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-label">Source</div>
+          <select id="f-src" class="filter-select" onchange="applyFilters()">
+            <option value="all">All Sources</option>
+            <option value="PHB">PHB only</option>
+            <option value="PHB+XGtE">PHB + XGtE</option>
+            <option value="PHB+XGtE+TCoE">PHB + XGtE + TCoE</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-label">Search</div>
+          <input type="text" id="f-search" class="search-input" placeholder="Search spells..." oninput="applyFilters()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile view toggle -->
+    <div id="mobile-view-toggle">
+      <button class="mv-btn active" id="mv-browse" onclick="setMobileView('browse')">Browse Spells</button>
+      <button class="mv-btn" id="mv-spellbook" onclick="setMobileView('spellbook')">My Spellbook (<span id="sb-count-mobile">0</span>)</button>
+    </div>
+
+    <!-- Two-panel -->
+    <div id="two-panel">
+      <div id="browse-panel">
+        <div class="card" style="padding:0; overflow:hidden;">
+          <div class="panel-header">
+            <span class="panel-title">Spell Browser</span>
+            <span class="spell-count" id="spell-count-label">0 spells</span>
+          </div>
+          <div id="browse-list"></div>
+        </div>
+      </div>
+
+      <div id="spellbook-panel">
+        <div class="card">
+          <div class="panel-header">
+            <span class="panel-title">My Spellbook</span>
+          </div>
+          <div class="prep-bar">
+            <span class="prep-count" id="sb-prep-label">0 prepared</span>
+            <span class="prep-sub" id="sb-prep-limit-label"></span>
+          </div>
+          <div class="sb-scroll" id="sb-list"></div>
+          <div class="granted-section" id="granted-section" style="display:none">
+            <div class="granted-title">Granted / Innate Spells (auto)</div>
+            <div id="granted-list"></div>
+          </div>
+          <div id="export-bar">
+            <button class="export-btn" onclick="exportCards(4)">&#128214; Cards 4-up</button>
+            <button class="export-btn" onclick="exportCards(8)">&#128214; Cards 8-up</button>
+            <button class="export-btn" onclick="exportTable()">&#128203; Table</button>
+            <button class="export-btn" onclick="exportReference()">&#128218; Reference</button>
+            <button class="export-btn" onclick="exportPDF()">&#128196; PDF Fill</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /tab1 -->
+
+  <!-- ══ TAB 2 ══ -->
+  <div id="tab2" class="tab-panel">
+    <div id="tab2-controls">
+      <div class="cb-group">
+        <div class="cb-label">Class</div>
+        <select id="t2-class" class="cb-select">
+          <option value="">— Select Class —</option>
+          <option>Artificer</option><option>Bard</option><option>Cleric</option>
+          <option>Druid</option><option>Paladin</option><option>Ranger</option>
+          <option>Sorcerer</option><option>Warlock</option><option>Wizard</option>
+        </select>
+      </div>
+      <div class="cb-group">
+        <div class="cb-label">Max Spell Level</div>
+        <select id="t2-maxlv" class="cb-select">
+          <option value="all">All Levels</option>
+          <option value="0">Cantrips Only</option>
+          <option value="1">Up to 1st</option><option value="2">Up to 2nd</option>
+          <option value="3">Up to 3rd</option><option value="4">Up to 4th</option>
+          <option value="5">Up to 5th</option><option value="6">Up to 6th</option>
+          <option value="7">Up to 7th</option><option value="8">Up to 8th</option>
+          <option value="9">Up to 9th</option>
+        </select>
+      </div>
+      <div class="cb-group">
+        <div class="cb-label">Source</div>
+        <select id="t2-src" class="cb-select">
+          <option value="all">All Sources</option>
+          <option value="PHB">PHB only</option>
+          <option value="PHB+XGtE">PHB + XGtE</option>
+          <option value="PHB+XGtE+TCoE">PHB + XGtE + TCoE</option>
+        </select>
+      </div>
+      <button class="t2-btn" onclick="previewClassBook()">Preview &amp; Print</button>
+    </div>
+    <div id="t2-preview" class="card" style="font-size:13px; color:var(--parchment-dim); text-align:center; padding:40px;">
+      Select a class and click Preview to generate the reference.
+    </div>
+  </div><!-- /tab2 -->
+
+</div><!-- /app -->
+
+<!-- Import Modal -->
+<div id="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">Import Character Sheet</div>
+    <button class="modal-close" onclick="closeImportModal()">&#10005;</button>
+    <div class="drop-zone" id="drop-zone">
+      <div class="drop-zone-label">Drag &amp; drop your character sheet PDF here</div>
+      <div class="drop-zone-sub">or click to browse</div>
+    </div>
+    <input type="file" id="modal-file-input" class="modal-file-input" accept=".pdf">
+    <div class="modal-status" id="modal-status">Supports all D&amp;D 5e character sheet templates.</div>
+  </div>
+</div>
+
+<script src="spell_ref_output.js"></script>
+<script>
+// ══════════════════════════════════════════════════════
+//  CONSTANTS & DATA
+// ══════════════════════════════════════════════════════
+const SCHOOL_COLORS = {
+  Abjur:'#4a90d9', Conj:'#e8a020', Div:'#90c8e0',
+  Ench:'#d070b0', Evoc:'#e04040', Illus:'#9060c8',
+  Necro:'#50a050', Trans:'#c07820'
+};
+const SCHOOL_NAMES = {
+  Abjur:'Abjuration', Conj:'Conjuration', Div:'Divination',
+  Ench:'Enchantment', Evoc:'Evocation', Illus:'Illusion',
+  Necro:'Necromancy', Trans:'Transmutation'
+};
+const LEVEL_LABELS = ['Cantrip','1st','2nd','3rd','4th','5th','6th','7th','8th','9th'];
+
+const GRANTED_SPELLS = {
+  subclasses: {
+    // Cleric Domains
+    'Life Domain': ['Bless','Cure Wounds','Lesser Restoration','Spiritual Weapon','Beacon of Hope','Revivify','Death Ward','Guardian of Faith','Mass Cure Wounds','Raise Dead'],
+    'Light Domain': ['Burning Hands','Faerie Fire','Flaming Sphere','Scorching Ray','Daylight','Fireball','Guardian of Faith','Wall of Fire','Flame Strike','Scrying'],
+    'Nature Domain': ['Animal Friendship','Speak with Animals','Barkskin','Spike Growth','Plant Growth','Wind Wall','Dominate Beast','Grasping Vine','Insect Plague','Tree Stride'],
+    'Tempest Domain': ['Fog Cloud','Thunderwave','Gust of Wind','Shatter','Call Lightning','Sleet Storm','Control Water','Ice Storm','Destructive Wave','Insect Plague'],
+    'Trickery Domain': ['Charm Person','Disguise Self','Mirror Image','Pass Without Trace','Blink','Dispel Magic','Dimension Door','Polymorph','Dominate Person','Modify Memory'],
+    'War Domain': ['Divine Favor','Shield of Faith','Magic Weapon','Spiritual Weapon',"Crusader's Mantle",'Spirit Guardians','Freedom of Movement','Stoneskin','Flame Strike','Hold Monster'],
+    'Knowledge Domain': ['Command','Identify','Augury','Suggestion','Nondetection','Speak with Dead','Arcane Eye','Confusion','Legend Lore','Scrying'],
+    'Death Domain': ['False Life','Ray of Sickness','Blindness/Deafness','Ray of Enfeeblement','Animate Dead','Vampiric Touch','Blight','Death Ward','Antilife Shell','Cloudkill'],
+    'Arcana Domain': ['Detect Magic','Magic Missile','Magic Weapon',"Nystul's Magic Aura",'Dispel Magic','Magic Circle','Arcane Eye',"Leomund's Secret Chest",'Planar Binding','Teleportation Circle'],
+    'Forge Domain': ['Identify','Searing Smite','Heat Metal','Magic Weapon','Elemental Weapon','Protection from Energy','Fabricate','Wall of Fire','Animate Objects','Creation'],
+    'Grave Domain': ['Bane','False Life','Gentle Repose','Ray of Enfeeblement','Revivify','Vampiric Touch','Blight','Death Ward','Antilife Shell','Raise Dead'],
+    'Order Domain': ['Command','Heroism','Hold Person','Zone of Truth','Mass Healing Word','Slow','Compulsion','Locate Creature','Commune','Dominate Person'],
+    'Peace Domain': ['Heroism','Sanctuary','Aid','Warding Bond','Beacon of Hope','Counterspell',"Otiluke's Resilient Sphere",'Stoneskin','Greater Restoration',"Rary's Telepathic Bond"],
+    'Twilight Domain': ['Faerie Fire','Sleep','Moonbeam','See Invisibility','Aura of Vitality',"Leomund's Tiny Hut",'Aura of Life','Greater Invisibility','Circle of Power','Mislead'],
+    // Paladin Oaths
+    'Oath of Devotion': ['Protection from Evil and Good','Sanctuary','Lesser Restoration','Zone of Truth','Beacon of Hope','Dispel Magic','Freedom of Movement','Guardian of Faith','Commune','Flame Strike'],
+    'Oath of the Ancients': ['Ensnaring Strike','Speak with Animals','Misty Step','Moonbeam','Plant Growth','Protection from Energy','Ice Storm','Stoneskin','Commune with Nature','Tree Stride'],
+    'Oath of Vengeance': ['Bane',"Hunter's Mark",'Hold Person','Misty Step','Haste','Protection from Energy','Banishment','Dimension Door','Hold Monster','Scrying'],
+    'Oath of Conquest': ['Armor of Agathys','Command','Hold Person','Spiritual Weapon','Bestow Curse','Fear','Dominate Beast','Stoneskin','Cloudkill','Dominate Person'],
+    'Oath of Redemption': ['Sanctuary','Sleep','Calm Emotions','Hold Person','Counterspell','Hypnotic Pattern',"Otiluke's Resilient Sphere",'Wall of Fire','Hold Monster','Mass Cure Wounds'],
+    'Oath of the Watchers': ['Alarm','Detect Magic','Moonbeam','See Invisibility','Counterspell','Nondetection','Aura of Purity','Banishment','Hold Monster','Scrying'],
+    'Oath of Glory': ['Guiding Bolt','Heroism','Enhance Ability','Magic Weapon','Aura of Vitality','Protection from Energy','Compulsion','Freedom of Movement','Commune','Flame Strike'],
+    'Oathbreaker': ['Hellish Rebuke','Inflict Wounds','Crown of Madness','Darkness','Animate Dead','Bestow Curse','Blight','Confusion','Contagion','Dominate Person'],
+    // Warlock Patrons
+    'The Archfey': ['Faerie Fire','Sleep','Calm Emotions','Phantasmal Force','Blink','Plant Growth','Dominate Beast','Greater Invisibility','Dominate Person','Seeming'],
+    'The Fiend': ['Burning Hands','Command','Blindness/Deafness','Scorching Ray','Fireball','Stinking Cloud','Fire Shield','Wall of Fire','Flame Strike','Hallow'],
+    'The Great Old One': ['Dissonant Whispers',"Tasha's Hideous Laughter",'Detect Thoughts','Phantasmal Force','Clairvoyance','Sending','Dominate Beast',"Evard's Black Tentacles",'Dominate Person','Telepathy'],
+    'The Celestial': ['Cure Wounds','Guiding Bolt','Flaming Sphere','Lesser Restoration','Daylight','Revivify','Guardian of Faith','Wall of Fire','Flame Strike','Greater Restoration'],
+    'The Hexblade': ['Shield','Wrathful Smite','Blur','Branding Smite','Blink','Elemental Weapon','Phantasmal Killer','Staggering Smite','Banishing Smite','Cone of Cold'],
+    'The Fathomless': ['Create or Destroy Water','Thunderwave','Gust of Wind','Silence','Lightning Bolt','Sleet Storm','Control Water','Summon Elemental',"Bigby's Hand",'Cone of Cold'],
+    'The Genie': ['(Varies by Genie type — see PHB)'],
+    'The Undead': ['Bane','False Life','Blindness/Deafness','Phantasmal Force','Phantom Steed','Speak with Dead','Death Ward','Greater Invisibility','Antilife Shell','Cloudkill'],
+    // Sorcerer
+    'Aberrant Mind': ['Arms of Hadar','Dissonant Whispers','Calm Emotions','Detect Thoughts','Hunger of Hadar','Sending',"Evard's Black Tentacles",'Summon Aberration','Telepathy','Telekinesis'],
+    'Clockwork Soul': ['Alarm','Protection from Evil and Good','Aid','Lesser Restoration','Dispel Magic','Protection from Energy','Freedom of Movement','Summon Construct','Wall of Force','Hold Monster'],
+    // Artificer
+    'Alchemist': ['Healing Word','Ray of Sickness','Flaming Sphere',"Melf's Acid Arrow",'Gaseous Form','Mass Healing Word','Blight','Death Ward','Cloudkill','Raise Dead'],
+    'Artillerist': ['Shield','Thunderwave','Scorching Ray','Shatter','Fireball','Wind Wall','Ice Storm','Wall of Fire','Cone of Cold','Wall of Force'],
+    'Battle Smith': ['Heroism','Shield','Branding Smite','Warding Bond','Aura of Vitality','Conjure Barrage','Aura of Purity','Fire Shield','Banishing Smite','Wall of Force'],
+    'Armorer': ['Magic Missile','Thunderwave','Mirror Image','Shatter','Hypnotic Pattern','Lightning Bolt','Fire Shield','Greater Invisibility','Passwall','Wall of Force'],
+    // Druid
+    'Circle of Spores': ['Chill Touch','Blindness/Deafness','Gentle Repose','Animate Dead','Gaseous Form','Blight','Cloudkill','Contagion'],
+    'Circle of Wildfire': ['Burning Hands','Cure Wounds','Flaming Sphere','Scorching Ray','Plant Growth','Revivify','Aura of Life','Fire Shield','Flame Strike','Mass Cure Wounds'],
+    'Circle of the Shepherd': ['Speak with Animals','Animal Friendship','Beast Sense','Spike Growth','Conjure Animals','Spirit Guardians','Dominate Beast','Giant Insect','Commune with Nature','Mass Cure Wounds'],
+    'Circle of Stars': ['Guiding Bolt (2 free castings/long rest)','Guidance (bonus cantrip)'],
+    // Ranger
+    'Fey Wanderer': ['Charm Person','Misty Step','Dispel Magic','Dimension Door','Mislead'],
+    'Swarmkeeper': ['Mage Hand (bonus cantrip)'],
+    // Bard
+    'College of Spirits': ['Guidance (bonus cantrip)'],
+  },
+  races: {
+    'Tiefling': [{spell:'Thaumaturgy',note:'At will, CHA'},{spell:'Hellish Rebuke',note:'1/day at lvl 3, CHA'},{spell:'Darkness',note:'1/day at lvl 5, CHA'}],
+    'Dark Elf (Drow)': [{spell:'Dancing Lights',note:'At will, CHA'},{spell:'Faerie Fire',note:'1/long rest at lvl 3, CHA'},{spell:'Darkness',note:'1/long rest at lvl 5, CHA'}],
+    'Firbolg': [{spell:'Detect Magic',note:'1/short rest, WIS'},{spell:'Disguise Self',note:'1/short rest, WIS'}],
+    'Deep Gnome': [{spell:'Nondetection',note:'At will (self), INT'},{spell:'Blindness/Deafness',note:'1/long rest, INT'},{spell:'Blur',note:'1/long rest, INT'}],
+    'Gray Dwarf (Duergar)': [{spell:'Enlarge/Reduce',note:'1/long rest at lvl 3 (self), —'},{spell:'Invisibility',note:'1/long rest at lvl 5 (self), —'}],
+    'Aasimar': [{spell:'Light',note:'At will cantrip, CHA'}],
+    'Protector (Aasimar)': [{spell:'Light',note:'At will, CHA'}],
+    'Scourge (Aasimar)': [{spell:'Light',note:'At will, CHA'}],
+    'Fallen (Aasimar)': [{spell:'Light',note:'At will, CHA'}],
+    'Triton': [{spell:'Fog Cloud',note:'1/long rest at lvl 1, CHA'},{spell:'Gust of Wind',note:'1/long rest at lvl 3, CHA'},{spell:'Wall of Water',note:'1/long rest at lvl 5, CHA'}],
+    'Yuan-Ti Pureblood': [{spell:'Poison Spray',note:'At will cantrip, CHA'},{spell:'Animal Friendship',note:'At will vs. snakes, CHA'},{spell:'Suggestion',note:'1/long rest at lvl 3, CHA'}],
+    'Fire Genasi': [{spell:'Produce Flame',note:'At will cantrip, CON'},{spell:'Burning Hands',note:'1/long rest at lvl 3, CON'}],
+    'Earth Genasi': [{spell:'Pass Without Trace',note:'1/long rest, CON'}],
+    'Water Genasi': [{spell:'Shape Water',note:'At will cantrip, CON'},{spell:'Create or Destroy Water',note:'1/long rest at lvl 3, CON'}],
+    'Air Genasi': [{spell:'Levitate',note:'1/long rest (self), CON'}],
+    'Hexblood': [{spell:'Disguise Self',note:'1/long rest'},{spell:'Hex',note:'1/long rest'}],
+  }
+};
+
+const FULL_SLOTS = [
+  [2],[3],[4,2],[4,3],[4,3,2],[4,3,3],[4,3,3,1],[4,3,3,2],[4,3,3,3,1],[4,3,3,3,2],
+  [4,3,3,3,2,1],[4,3,3,3,2,1],[4,3,3,3,2,1,1],[4,3,3,3,2,1,1],[4,3,3,3,2,1,1,1],
+  [4,3,3,3,2,1,1,1],[4,3,3,3,2,1,1,1,1],[4,3,3,3,3,1,1,1,1],[4,3,3,3,3,2,1,1,1],[4,3,3,3,3,2,2,1,1]
+];
+const HALF_SLOTS = [
+  [],[2],[3],[3,1],[4,2],[4,2],[4,3],[4,3],[4,3,2],[4,3,2],
+  [4,3,3],[4,3,3],[4,3,3,1],[4,3,3,1],[4,3,3,2],[4,3,3,2],[4,3,3,3,1],[4,3,3,3,1],[4,3,3,3,2],[4,3,3,3,2]
+];
+const WARLOCK_SLOTS = [
+  [1,1],[2,1],[2,2],[2,2],[2,3],[2,3],[2,4],[2,4],[2,5],[2,5],
+  [3,5],[3,5],[3,5],[3,5],[3,5],[3,5],[4,5],[4,5],[4,5],[4,5]
+];
+const ART_SLOTS = [
+  [],[2],[3],[3],[4,2],[4,2],[4,3],[4,3],[4,3,2],[4,3,2],
+  [4,3,3],[4,3,3],[4,3,3,1],[4,3,3,1],[4,3,3,2],[4,3,3,2],[4,3,3,3,1],[4,3,3,3,1],[4,3,3,3,2],[4,3,3,3,2]
+];
+
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+let spellbook = [];       // array of spell names
+let filteredSpells = [];
+let filterState = {
+  levels: new Set([0,1,2,3,4,5,6,7,8,9]),
+  schools: new Set(['Abjur','Conj','Div','Ench','Evoc','Illus','Necro','Trans']),
+  conc: false, rit: false
+};
+
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
+  setupChipListeners();
+  setupDropZone();
+  applyFilters();
+  renderSpellbook();
+});
+
+document.getElementById('bw-toggle').addEventListener('change', e => {
+  document.body.dataset.bw = e.target.checked ? '1' : '';
+  if (!e.target.checked) delete document.body.dataset.bw;
+});
+
+// ══════════════════════════════════════════════════════
+//  TAB SWITCHING
+// ══════════════════════════════════════════════════════
+function switchTab(n) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', i===n-1));
+  document.querySelectorAll('.tab-panel').forEach((p,i) => p.classList.toggle('active', i===n-1));
+}
+
+// ══════════════════════════════════════════════════════
+//  FILTER SETUP
+// ══════════════════════════════════════════════════════
+function setupChipListeners() {
+  document.querySelectorAll('#f-levels .cb-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const lv = parseInt(chip.dataset.lv);
+      chip.classList.toggle('checked');
+      chip.querySelector('input').checked = chip.classList.contains('checked');
+      if (chip.classList.contains('checked')) filterState.levels.add(lv);
+      else filterState.levels.delete(lv);
+      applyFilters();
+    });
+  });
+  document.querySelectorAll('#f-schools .cb-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const sch = chip.dataset.sch;
+      chip.classList.toggle('checked');
+      chip.querySelector('input').checked = chip.classList.contains('checked');
+      if (chip.classList.contains('checked')) filterState.schools.add(sch);
+      else filterState.schools.delete(sch);
+      applyFilters();
+    });
+  });
+}
+
+function toggleFilter(type) {
+  filterState[type] = !filterState[type];
+  document.getElementById('f-' + type).classList.toggle('on', filterState[type]);
+  applyFilters();
+}
+
+function toggleFilters() {
+  const body = document.getElementById('filter-body');
+  const arrow = document.getElementById('filter-toggle-arrow');
+  body.classList.toggle('collapsed');
+  arrow.textContent = body.classList.contains('collapsed') ? '▶' : '▼';
+}
+
+// ══════════════════════════════════════════════════════
+//  FILTER LOGIC
+// ══════════════════════════════════════════════════════
+const SRC_SETS = {
+  all: null,
+  PHB: new Set(['PHB']),
+  'PHB+XGtE': new Set(['PHB','XGtE']),
+  'PHB+XGtE+TCoE': new Set(['PHB','XGtE','TCoE'])
+};
+
+function applyFilters() {
+  const fClass = document.getElementById('f-class').value;
+  const fSrc = document.getElementById('f-src').value;
+  const fSearch = document.getElementById('f-search').value.toLowerCase().trim();
+  const srcSet = SRC_SETS[fSrc];
+
+  filteredSpells = Object.entries(SPELL_REF).filter(([name, s]) => {
+    if (!filterState.levels.has(s.lv)) return false;
+    if (!filterState.schools.has(s.sch)) return false;
+    if (filterState.conc && !s.conc) return false;
+    if (filterState.rit && !s.rit) return false;
+    if (srcSet && !srcSet.has(s.src)) return false;
+    if (fClass) {
+      const cls = Array.isArray(s.cls) ? s.cls : s.cls.split(',').map(c=>c.trim());
+      if (!cls.includes(fClass)) return false;
+    }
+    if (fSearch && !name.toLowerCase().includes(fSearch) && !(s.d||'').toLowerCase().includes(fSearch)) return false;
+    return true;
+  }).sort((a,b) => {
+    if (a[1].lv !== b[1].lv) return a[1].lv - b[1].lv;
+    return a[0].localeCompare(b[0]);
+  });
+
+  renderBrowseList();
+}
+
+// ══════════════════════════════════════════════════════
+//  BROWSE RENDERING
+// ══════════════════════════════════════════════════════
+function renderBrowseList() {
+  const container = document.getElementById('browse-list');
+  document.getElementById('spell-count-label').textContent = filteredSpells.length + ' spells';
+
+  const frag = document.createDocumentFragment();
+  for (const [name, s] of filteredSpells) {
+    const row = document.createElement('div');
+    row.className = 'spell-row' + (spellbook.includes(name) ? ' in-book' : '');
+    row.dataset.name = name;
+    row.innerHTML = buildSpellRowHTML(name, s);
+    row.addEventListener('click', e => {
+      if (e.target.classList.contains('add-btn') || e.target.closest('.add-btn')) return;
+      row.classList.toggle('expanded');
+    });
+    const addBtn = row.querySelector('.add-btn');
+    if (addBtn) {
+      addBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        addToSpellbook(name);
+      });
+    }
+    frag.appendChild(row);
+  }
+  container.innerHTML = '';
+  container.appendChild(frag);
+}
+
+function buildSpellRowHTML(name, s) {
+  const inBook = spellbook.includes(name);
+  const lvLabel = s.lv === 0 ? 'Cantrip' : LEVEL_LABELS[s.lv];
+  const schColor = SCHOOL_COLORS[s.sch] || '#888';
+  const cls = Array.isArray(s.cls) ? s.cls : s.cls.split(',').map(c=>c.trim());
+  return `
+    <div class="school-badge sch-${s.sch}" style="background:${schColor}">${s.sch}</div>
+    <div class="spell-info">
+      <div class="spell-name-line">
+        <span class="spell-name">${escHtml(name)}</span>
+        <span class="lv-badge">${lvLabel}</span>
+        ${s.conc ? '<span class="badge badge-conc">C</span>' : ''}
+        ${s.rit ? '<span class="badge badge-rit">R</span>' : ''}
+      </div>
+      <div class="spell-meta">
+        <span class="spell-meta-item">${escHtml(s.cast||'')}</span>
+        <span class="spell-meta-item">&#x2022;</span>
+        <span class="spell-meta-item">${escHtml(s.rng||'')}</span>
+        <span class="spell-meta-item">&#x2022;</span>
+        <span class="spell-meta-item">${SCHOOL_NAMES[s.sch]||s.sch}</span>
+        <span class="badge badge-src">${s.src}</span>
+      </div>
+      <div class="spell-desc-expand">${escHtml(s.d||'')}</div>
+    </div>
+    <button class="add-btn" title="Add to spellbook" ${inBook?'disabled':''}>+</button>
+  `;
+}
+
+// ══════════════════════════════════════════════════════
+//  SPELLBOOK
+// ══════════════════════════════════════════════════════
+function addToSpellbook(name) {
+  if (spellbook.includes(name)) return;
+  spellbook.push(name);
+  renderSpellbook();
+  // update browse row state
+  const row = document.querySelector(`#browse-list .spell-row[data-name="${CSS.escape(name)}"]`);
+  if (row) {
+    row.classList.add('in-book');
+    const btn = row.querySelector('.add-btn');
+    if (btn) btn.disabled = true;
+  }
+  updateMobileCount();
+}
+
+function removeFromSpellbook(name) {
+  spellbook = spellbook.filter(n => n !== name);
+  renderSpellbook();
+  const row = document.querySelector(`#browse-list .spell-row[data-name="${CSS.escape(name)}"]`);
+  if (row) {
+    row.classList.remove('in-book');
+    const btn = row.querySelector('.add-btn');
+    if (btn) btn.disabled = false;
+  }
+  updateMobileCount();
+}
+
+function renderSpellbook() {
+  const container = document.getElementById('sb-list');
+  if (spellbook.length === 0) {
+    container.innerHTML = '<div style="padding:20px 0; color:var(--parchment-dim); font-size:12px; text-align:center; font-style:italic;">No spells added yet.<br>Browse and click + to add.</div>';
+    updatePrepCounter();
+    return;
+  }
+
+  // Group by level
+  const byLevel = {};
+  for (const name of spellbook) {
+    const s = SPELL_REF[name];
+    if (!s) continue;
+    if (!byLevel[s.lv]) byLevel[s.lv] = [];
+    byLevel[s.lv].push(name);
+  }
+  Object.values(byLevel).forEach(arr => arr.sort());
+
+  let html = '';
+  for (const lv of Object.keys(byLevel).sort((a,b)=>a-b)) {
+    html += `<div class="sb-level-group"><div class="sb-level-header">${LEVEL_LABELS[lv]}</div>`;
+    for (const name of byLevel[lv]) {
+      const s = SPELL_REF[name];
+      const schColor = SCHOOL_COLORS[s.sch] || '#888';
+      html += `<div class="sb-spell-row">
+        <span class="school-badge sch-${s.sch}" style="background:${schColor};font-size:8px;padding:1px 4px">${s.sch}</span>
+        <span class="sb-spell-name" title="${escHtml(name)}">${escHtml(name)}</span>
+        ${s.conc ? '<span class="badge badge-conc">C</span>' : ''}
+        ${s.rit ? '<span class="badge badge-rit">R</span>' : ''}
+        <button class="sb-remove-btn" data-name="${escHtml(name)}" title="Remove">&#215;</button>
+      </div>`;
+    }
+    html += '</div>';
+  }
+  container.innerHTML = html;
+  container.querySelectorAll('.sb-remove-btn').forEach(btn => {
+    btn.addEventListener('click', () => removeFromSpellbook(btn.dataset.name));
+  });
+  updatePrepCounter();
+}
+
+function updatePrepCounter() {
+  const cls = document.getElementById('char-class').value;
+  const lv = parseInt(document.getElementById('char-level').value) || 0;
+  const abilityScore = parseInt(document.getElementById('char-ability-score').value) || 0;
+
+  const nonCantrips = spellbook.filter(n => SPELL_REF[n] && SPELL_REF[n].lv > 0);
+  const prepared = nonCantrips.length;
+  document.getElementById('sb-count-mobile').textContent = spellbook.length;
+
+  let maxPrep = null;
+  if (cls && lv && abilityScore) {
+    const mod = Math.floor((abilityScore - 10) / 2);
+    const halfCasters = ['Paladin','Ranger','Artificer'];
+    if (halfCasters.includes(cls)) {
+      maxPrep = Math.max(1, mod + Math.floor(lv / 2));
+    } else if (['Warlock','Sorcerer','Bard'].includes(cls)) {
+      maxPrep = null; // known spells
+    } else {
+      maxPrep = Math.max(1, mod + lv);
+    }
+  }
+
+  const label = document.getElementById('sb-prep-label');
+  const limitLabel = document.getElementById('sb-prep-limit-label');
+  const prepDisplay = document.getElementById('prep-display');
+  const prepUsed = document.getElementById('prep-used');
+  const prepMax = document.getElementById('prep-max');
+
+  if (maxPrep !== null) {
+    const over = prepared > maxPrep;
+    label.textContent = prepared + ' prepared';
+    label.className = 'prep-count' + (over ? ' prep-over' : '');
+    limitLabel.textContent = 'of ' + maxPrep + ' max';
+    prepDisplay.style.display = 'flex';
+    prepUsed.textContent = prepared;
+    prepMax.textContent = maxPrep;
+    prepUsed.style.color = over ? 'var(--red)' : 'var(--gold)';
+  } else {
+    label.textContent = spellbook.length + ' spells in book';
+    label.className = 'prep-count';
+    limitLabel.textContent = '';
+    prepDisplay.style.display = 'none';
+  }
+}
+
+function updateMobileCount() {
+  document.getElementById('sb-count-mobile').textContent = spellbook.length;
+}
+
+// ══════════════════════════════════════════════════════
+//  CHARACTER BAR
+// ══════════════════════════════════════════════════════
+function onCharChange() {
+  updatePrepCounter();
+  // Auto-filter class
+  const cls = document.getElementById('char-class').value;
+  if (cls) {
+    document.getElementById('f-class').value = cls;
+    applyFilters();
+  }
+}
+
+function onSubclassChange() {
+  renderGranted();
+}
+
+function renderGranted() {
+  const subclass = document.getElementById('char-subclass').value.trim();
+  const race = document.getElementById('char-race').value.trim();
+  const section = document.getElementById('granted-section');
+  const list = document.getElementById('granted-list');
+
+  let items = [];
+
+  // Subclass spells
+  if (subclass && GRANTED_SPELLS.subclasses[subclass]) {
+    items.push(`<div class="granted-title" style="margin-top:0">${escHtml(subclass)} Spells</div>`);
+    for (const sp of GRANTED_SPELLS.subclasses[subclass]) {
+      items.push(`<div class="granted-item"><span class="granted-item-name">${escHtml(sp)}</span></div>`);
+    }
+  }
+
+  // Race innate
+  const raceKey = findRaceKey(race);
+  if (raceKey) {
+    items.push(`<div class="granted-title" style="margin-top:6px">${escHtml(raceKey)} Innate Magic</div>`);
+    for (const entry of GRANTED_SPELLS.races[raceKey]) {
+      items.push(`<div class="granted-item"><span class="granted-item-name">${escHtml(entry.spell)}</span><span class="granted-item-note">${escHtml(entry.note)}</span></div>`);
+    }
+  }
+
+  if (items.length > 0) {
+    list.innerHTML = items.join('');
+    section.style.display = 'block';
+  } else {
+    section.style.display = 'none';
+  }
+}
+
+function findRaceKey(race) {
+  if (!race) return null;
+  const r = race.trim();
+  for (const key of Object.keys(GRANTED_SPELLS.races)) {
+    if (key.toLowerCase() === r.toLowerCase()) return key;
+  }
+  // Partial match
+  for (const key of Object.keys(GRANTED_SPELLS.races)) {
+    if (key.toLowerCase().includes(r.toLowerCase()) || r.toLowerCase().includes(key.toLowerCase().split(' ')[0])) return key;
+  }
+  return null;
+}
+
+// ══════════════════════════════════════════════════════
+//  MOBILE VIEW TOGGLE
+// ══════════════════════════════════════════════════════
+function setMobileView(view) {
+  document.getElementById('browse-panel').classList.toggle('hidden', view !== 'browse');
+  document.getElementById('spellbook-panel').classList.toggle('hidden', view !== 'spellbook');
+  document.getElementById('mv-browse').classList.toggle('active', view === 'browse');
+  document.getElementById('mv-spellbook').classList.toggle('active', view === 'spellbook');
+}
+
+// ══════════════════════════════════════════════════════
+//  EXPORT: SHARED HELPERS
+// ══════════════════════════════════════════════════════
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function isBW() { return document.body.dataset.bw === '1'; }
+
+function schColor(sch) {
+  if (isBW()) return '#666';
+  return SCHOOL_COLORS[sch] || '#888';
+}
+
+function printStyles() {
+  return `
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Lora', serif; background: #fff; color: #1a0a00; font-size: 11px; }
+    @page { margin: 0.5in; }
+  `;
+}
+
+function getSpellsToExport() {
+  return spellbook.map(n => [n, SPELL_REF[n]]).filter(([,s])=>s);
+}
+
+function lvOrdinal(lv) {
+  if (lv === 0) return 'Cantrip';
+  if (lv === 1) return '1st-level';
+  if (lv === 2) return '2nd-level';
+  if (lv === 3) return '3rd-level';
+  return lv + 'th-level';
+}
+
+// ══════════════════════════════════════════════════════
+//  EXPORT: CARDS
+// ══════════════════════════════════════════════════════
+function exportCards(perPage) {
+  const spells = getSpellsToExport();
+  if (!spells.length) { alert('Your spellbook is empty!'); return; }
+  const cols = 2;
+  const rows = perPage / 2; // 2 or 4
+  const cardH = perPage === 4 ? '4.8in' : '2.3in';
+  const truncLen = perPage === 8 ? 160 : 9999;
+
+  let pages = '';
+  for (let i = 0; i < spells.length; i += perPage) {
+    const chunk = spells.slice(i, i + perPage);
+    let grid = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;page-break-after:always;">';
+    for (const [name, s] of chunk) {
+      const bg = schColor(s.sch);
+      const desc = truncLen < 9999 ? (s.d||'').slice(0,truncLen) + ((s.d||'').length > truncLen ? '…' : '') : (s.d||'');
+      grid += `
+        <div style="border:1.5px solid ${bg};border-radius:6px;overflow:hidden;height:${cardH};display:flex;flex-direction:column;">
+          <div style="background:${bg};color:#fff;padding:6px 10px;text-shadow:0 1px 2px rgba(0,0,0,0.4);">
+            <div style="font-family:'Cinzel',serif;font-size:${perPage===4?'13px':'11px'};font-weight:700;">${escHtml(name)}</div>
+            <div style="font-size:9px;opacity:0.9;">${lvOrdinal(s.lv)} • ${SCHOOL_NAMES[s.sch]||s.sch}</div>
+          </div>
+          <div style="padding:6px 10px;flex:1;overflow:hidden;font-size:${perPage===4?'10px':'9px'};">
+            <div style="display:flex;gap:10px;margin-bottom:4px;font-size:9px;color:#555;">
+              <span><b>Cast:</b> ${escHtml(s.cast||'')}</span>
+              <span><b>Range:</b> ${escHtml(s.rng||'')}</span>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:4px;">
+              ${s.conc ? '<span style="background:#e8e0f8;color:#6040a0;border-radius:3px;padding:1px 5px;font-size:8px;font-family:serif;">Concentration</span>' : ''}
+              ${s.rit ? '<span style="background:#e0f0e8;color:#307050;border-radius:3px;padding:1px 5px;font-size:8px;font-family:serif;">Ritual</span>' : ''}
+            </div>
+            <div style="line-height:1.5;color:#2a1200;">${escHtml(desc)}</div>
+          </div>
+          <div style="padding:4px 10px;border-top:1px solid ${bg}33;font-size:8px;color:#888;display:flex;justify-content:space-between;">
+            <span>${escHtml(s.src)}</span>
+            <span>${escHtml(s.sch)}</span>
+          </div>
+        </div>`;
+    }
+    grid += '</div>';
+    pages += grid;
+  }
+
+  const win = window.open('', '_blank');
+  if (!win) { alert('Please allow popups for this site.'); return; }
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Spell Cards</title><style>${printStyles()}</style></head><body>${pages}<script>window.onload=()=>window.print();<\/script></body></html>`);
+  win.document.close();
+}
+
+// ══════════════════════════════════════════════════════
+//  EXPORT: TABLE
+// ══════════════════════════════════════════════════════
+function exportTable() {
+  const spells = getSpellsToExport();
+  if (!spells.length) { alert('Your spellbook is empty!'); return; }
+
+  const charName = document.getElementById('char-name').value || 'Spellbook';
+  let rows = '';
+  for (const [name, s] of spells.sort((a,b)=>{
+    if(a[1].lv!==b[1].lv) return a[1].lv-b[1].lv; return a[0].localeCompare(b[0]);
+  })) {
+    const cls = Array.isArray(s.cls) ? s.cls.join(', ') : s.cls;
+    rows += `<tr>
+      <td style="font-weight:600;">${escHtml(name)}</td>
+      <td style="text-align:center;">${LEVEL_LABELS[s.lv]}</td>
+      <td><span style="background:${schColor(s.sch)};color:#fff;padding:1px 6px;border-radius:3px;font-size:9px;">${s.sch}</span></td>
+      <td>${escHtml(s.cast||'')}</td>
+      <td>${escHtml(s.rng||'')}</td>
+      <td style="text-align:center;">${s.conc?'&#10003;':''}</td>
+      <td style="text-align:center;">${s.rit?'&#10003;':''}</td>
+      <td style="font-size:9px;color:#666;">${escHtml(cls)}</td>
+      <td style="font-size:9px;">${escHtml(s.src)}</td>
+    </tr>`;
+  }
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Spell List — ${escHtml(charName)}</title>
+  <style>${printStyles()}
+    h1{font-family:'Cinzel',serif;font-size:16px;margin-bottom:12px;color:#6b3a00;}
+    table{width:100%;border-collapse:collapse;font-size:10px;}
+    th{background:#6b3a00;color:#f0dab0;font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.05em;padding:5px 6px;text-align:left;}
+    td{padding:4px 6px;border-bottom:1px solid #ddd;vertical-align:middle;}
+    tr:nth-child(even) td{background:#faf5ec;}
+  </style></head><body>
+  <h1>${escHtml(charName)} — Spell List</h1>
+  <table><thead><tr>
+    <th>Name</th><th>Level</th><th>School</th><th>Cast Time</th><th>Range</th>
+    <th>C</th><th>R</th><th>Classes</th><th>Src</th>
+  </tr></thead><tbody>${rows}</tbody></table>
+  <script>window.onload=()=>window.print();<\/script></body></html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) { alert('Please allow popups for this site.'); return; }
+  win.document.write(html);
+  win.document.close();
+}
+
+// ══════════════════════════════════════════════════════
+//  EXPORT: REFERENCE SHEET
+// ══════════════════════════════════════════════════════
+function exportReference() {
+  const spells = getSpellsToExport();
+  if (!spells.length) { alert('Your spellbook is empty!'); return; }
+  const charName = document.getElementById('char-name').value || 'Spellbook';
+
+  const byLevel = {};
+  for (const [name,s] of spells) {
+    if (!byLevel[s.lv]) byLevel[s.lv] = [];
+    byLevel[s.lv].push([name,s]);
+  }
+  Object.values(byLevel).forEach(a=>a.sort((x,y)=>x[0].localeCompare(y[0])));
+
+  let body = '';
+  for (const lv of Object.keys(byLevel).sort((a,b)=>a-b)) {
+    const c = schColor(byLevel[lv][0][1].sch);
+    body += `<div style="page-break-before:${lv>0?'always':'auto'};padding-top:${lv>0?'8px':'0'}">
+      <h2 style="font-family:'Cinzel',serif;font-size:15px;color:#6b3a00;border-bottom:2px solid ${c};padding-bottom:4px;margin-bottom:12px;">${LEVEL_LABELS[lv]} Spells</h2>`;
+    for (const [name,s] of byLevel[lv]) {
+      body += `<div style="margin-bottom:12px;padding:8px 10px;border-left:3px solid ${schColor(s.sch)};background:#fdf8f0;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <span style="font-family:'Cinzel',serif;font-size:12px;font-weight:700;">${escHtml(name)}</span>
+          <span style="font-size:9px;background:${schColor(s.sch)};color:#fff;padding:1px 6px;border-radius:3px;">${s.sch}</span>
+          ${s.conc?'<span style="font-size:9px;background:#e8e0f8;color:#6040a0;padding:1px 5px;border-radius:3px;">Conc</span>':''}
+          ${s.rit?'<span style="font-size:9px;background:#e0f0e8;color:#307050;padding:1px 5px;border-radius:3px;">Ritual</span>':''}
+        </div>
+        <div style="font-size:9px;color:#666;margin-bottom:4px;">Cast: ${escHtml(s.cast||'')} &nbsp;|&nbsp; Range: ${escHtml(s.rng||'')} &nbsp;|&nbsp; Source: ${escHtml(s.src)}</div>
+        <div style="font-size:10px;line-height:1.6;color:#2a1200;">${escHtml(s.d||'')}</div>
+      </div>`;
+    }
+    body += '</div>';
+  }
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Spell Reference — ${escHtml(charName)}</title>
+  <style>${printStyles()} h1{font-family:'Cinzel',serif;font-size:18px;color:#6b3a00;margin-bottom:16px;}</style>
+  </head><body><h1>${escHtml(charName)} — Spell Reference</h1>${body}
+  <script>window.onload=()=>window.print();<\/script></body></html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) { alert('Please allow popups for this site.'); return; }
+  win.document.write(html);
+  win.document.close();
+}
+
+// ══════════════════════════════════════════════════════
+//  EXPORT: PDF FILL
+// ══════════════════════════════════════════════════════
+function intToField(n) {
+  return n >= 10100 ? 'Spells 1' + String(n).slice(1) : 'Spells ' + n;
+}
+
+async function exportPDF() {
+  if (!spellbook.length) { alert('Your spellbook is empty!'); return; }
+  if (typeof PDFLib === 'undefined') { alert('pdf-lib not loaded.'); return; }
+
+  const cls = document.getElementById('char-class').value || '';
+  const ability = document.getElementById('char-ability').value || '';
+  const abilityScore = parseInt(document.getElementById('char-ability-score').value) || 10;
+  const lv = parseInt(document.getElementById('char-level').value) || 1;
+  const profBonus = Math.ceil(lv / 4) + 1;
+  const mod = Math.floor((abilityScore - 10) / 2);
+  const saveDC = 8 + profBonus + mod;
+  const atkBonus = profBonus + mod;
+
+  // Gather spells by level
+  const byLevel = {};
+  for (const name of spellbook) {
+    const s = SPELL_REF[name];
+    if (!s) continue;
+    if (!byLevel[s.lv]) byLevel[s.lv] = [];
+    byLevel[s.lv].push(name);
+  }
+  Object.values(byLevel).forEach(a=>a.sort());
+
+  const cantrips = byLevel[0] || [];
+  const lvlSpells = [];
+  for (let i = 1; i <= 9; i++) lvlSpells.push(byLevel[i] || []);
+
+  // Slot counts
+  let slots;
+  const halfCasters = ['Paladin','Ranger'];
+  if (cls === 'Warlock') slots = WARLOCK_SLOTS[lv-1] || [];
+  else if (cls === 'Artificer') slots = ART_SLOTS[lv-1] || [];
+  else if (halfCasters.includes(cls)) slots = HALF_SLOTS[lv-1] || [];
+  else slots = FULL_SLOTS[lv-1] || [];
+
+  // Field slots: SlotsTotal 19 = 1st level, 20=2nd, ...27=8th? The sheet uses 19-27 for 1-9th
+  const slotFields = {};
+  for (let i = 0; i < Math.min(slots.length, 9); i++) {
+    slotFields['SlotsTotal ' + (19+i)] = String(slots[i]);
+    slotFields['SlotsRemaining ' + (19+i)] = String(slots[i]);
+  }
+
+  try {
+    const templateUrl = 'sheets/Spellcasting Sheet (Optional) - Form Fillable.pdf';
+    const resp = await fetch(templateUrl);
+    if (!resp.ok) throw new Error('Could not load spellcasting sheet PDF.');
+    const templateBytes = await resp.arrayBuffer();
+
+    // Spell slot layout per page:
+    // Cantrips: fields 1014-1021 (8 slots), checkboxes 3010-3017
+    // 1st: fields 1022-1033 (12 slots), checkboxes 3018-3029
+    // 2nd+: fields 1034-10113 and beyond
+    // Build list of (fieldId, spellName) pairs
+    const fieldAssignments = [];
+
+    // Cantrips (8 fields)
+    for (let i = 0; i < Math.min(cantrips.length, 8); i++) {
+      fieldAssignments.push([intToField(1014+i), cantrips[i]]);
+    }
+    // 1st level (12 fields: 1022-1033)
+    const first = lvlSpells[0];
+    for (let i = 0; i < Math.min(first.length, 12); i++) {
+      fieldAssignments.push([intToField(1022+i), first[i]]);
+    }
+    // 2nd-9th: 1034-10113 (80 fields across 8 levels, 10 each)
+    let fieldIdx = 1034;
+    for (let lvIdx = 1; lvIdx < 9; lvIdx++) {
+      const spellsAtLv = lvlSpells[lvIdx];
+      for (let i = 0; i < Math.min(spellsAtLv.length, 10); i++) {
+        fieldAssignments.push([intToField(fieldIdx), spellsAtLv[i]]);
+        fieldIdx++;
+      }
+      fieldIdx = 1034 + (lvIdx) * 10;
+    }
+
+    // Load and fill page 1
+    const { PDFDocument } = PDFLib;
+    const pdfDoc = await PDFDocument.load(templateBytes);
+    const form = pdfDoc.getForm();
+
+    const safeSet = (name, val) => {
+      try { form.getTextField(name).setText(val); } catch(e) {}
+    };
+
+    safeSet('Spellcasting Class 2', cls);
+    safeSet('SpellcastingAbility 2', ability);
+    safeSet('SpellSaveDC  2', String(saveDC));
+    safeSet('SpellAtkBonus 2', (atkBonus >= 0 ? '+' : '') + atkBonus);
+
+    for (const [field, val] of Object.entries(slotFields)) {
+      safeSet(field, val);
+    }
+
+    for (const [fieldName, spellName] of fieldAssignments) {
+      safeSet(fieldName, spellName);
+    }
+
+    // Checkboxes for cantrips
+    for (let i = 0; i < 8; i++) {
+      try {
+        const cb = form.getCheckBox('Check Box ' + (3010+i));
+        if (i < cantrips.length) cb.check(); else cb.uncheck();
+      } catch(e) {}
+    }
+    for (let i = 0; i < 12; i++) {
+      try {
+        const cb = form.getCheckBox('Check Box ' + (3018+i));
+        if (i < first.length) cb.check(); else cb.uncheck();
+      } catch(e) {}
+    }
+
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes], {type:'application/pdf'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const charName = document.getElementById('char-name').value || 'Character';
+    a.download = charName + ' - Spellcasting Sheet.pdf';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+  } catch(err) {
+    alert('PDF export error: ' + err.message);
+    console.error(err);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  TAB 2: COMPLETE CLASS SPELLBOOK
+// ══════════════════════════════════════════════════════
+function previewClassBook() {
+  const cls = document.getElementById('t2-class').value;
+  const maxLvRaw = document.getElementById('t2-maxlv').value;
+  const srcVal = document.getElementById('t2-src').value;
+
+  if (!cls) { alert('Please select a class.'); return; }
+
+  const maxLv = maxLvRaw === 'all' ? 9 : parseInt(maxLvRaw);
+  const srcSet = SRC_SETS[srcVal];
+
+  const spells = Object.entries(SPELL_REF).filter(([name, s]) => {
+    if (s.lv > maxLv) return false;
+    if (srcSet && !srcSet.has(s.src)) return false;
+    const clsList = Array.isArray(s.cls) ? s.cls : s.cls.split(',').map(c=>c.trim());
+    return clsList.includes(cls);
+  }).sort((a,b) => {
+    if (a[1].lv !== b[1].lv) return a[1].lv - b[1].lv;
+    return a[0].localeCompare(b[0]);
+  });
+
+  if (!spells.length) {
+    document.getElementById('t2-preview').innerHTML = '<div style="color:var(--parchment-dim);text-align:center;padding:40px">No spells found for those filters.</div>';
+    return;
+  }
+
+  const byLevel = {};
+  for (const [name,s] of spells) {
+    if (!byLevel[s.lv]) byLevel[s.lv] = [];
+    byLevel[s.lv].push([name,s]);
+  }
+
+  let body = '';
+  for (const lv of Object.keys(byLevel).sort((a,b)=>a-b)) {
+    const c = isBW() ? '#666' : SCHOOL_COLORS['Evoc'];
+    body += `<div style="page-break-before:${lv>0?'always':'auto'};padding-top:${lv>0?'8px':'0'}">
+      <h2 style="font-family:'Cinzel',serif;font-size:16px;color:#6b3a00;border-bottom:2px solid #c9a84c;padding-bottom:6px;margin-bottom:14px;">${LEVEL_LABELS[lv]} Spells <span style="font-size:11px;font-weight:400;color:#888;">(${byLevel[lv].length})</span></h2>`;
+    for (const [name,s] of byLevel[lv]) {
+      const bg = isBW() ? '#666' : SCHOOL_COLORS[s.sch];
+      body += `<div style="margin-bottom:10px;padding:8px 10px;border-left:3px solid ${bg};background:#fdf8f0;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px;">
+          <span style="font-family:'Cinzel',serif;font-size:12px;font-weight:700;">${escHtml(name)}</span>
+          <span style="font-size:9px;background:${bg};color:#fff;padding:1px 6px;border-radius:3px;">${s.sch}</span>
+          ${s.conc?'<span style="font-size:9px;background:#e8e0f8;color:#6040a0;padding:1px 5px;border-radius:3px;">C</span>':''}
+          ${s.rit?'<span style="font-size:9px;background:#e0f0e8;color:#307050;padding:1px 5px;border-radius:3px;">R</span>':''}
+          <span style="font-size:9px;color:#888;">${escHtml(s.src)}</span>
+        </div>
+        <div style="font-size:9px;color:#666;margin-bottom:3px;">Cast: ${escHtml(s.cast||'')} &nbsp;|&nbsp; Range: ${escHtml(s.rng||'')}</div>
+        <div style="font-size:10px;line-height:1.55;color:#2a1200;">${escHtml(s.d||'')}</div>
+      </div>`;
+    }
+    body += '</div>';
+  }
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escHtml(cls)} Spellbook</title>
+  <style>${printStyles()} h1{font-family:'Cinzel',serif;font-size:18px;color:#6b3a00;margin-bottom:16px;border-bottom:2px solid #c9a84c;padding-bottom:8px;}</style>
+  </head><body><h1>${escHtml(cls)} Spell Reference</h1>${body}
+  <script>window.onload=()=>window.print();<\/script></body></html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) { alert('Please allow popups for this site.'); return; }
+  win.document.write(html);
+  win.document.close();
+}
+
+// ══════════════════════════════════════════════════════
+//  IMPORT MODAL
+// ══════════════════════════════════════════════════════
+function openImportModal() {
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeImportModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.getElementById('modal-status').textContent = 'Supports all D&D 5e character sheet templates.';
+  document.getElementById('modal-status').className = 'modal-status';
+}
+
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeImportModal();
+});
+
+function setupDropZone() {
+  const zone = document.getElementById('drop-zone');
+  const input = document.getElementById('modal-file-input');
+
+  zone.addEventListener('click', () => input.click());
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) handleImportFile(file);
+  });
+  input.addEventListener('change', () => {
+    if (input.files[0]) handleImportFile(input.files[0]);
+  });
+}
+
+async function handleImportFile(file) {
+  const status = document.getElementById('modal-status');
+  status.className = 'modal-status';
+  status.textContent = 'Reading PDF…';
+
+  try {
+    const fields = await readPDFFields(file);
+    applyImportedFields(fields);
+    status.textContent = 'Character sheet imported successfully!';
+    status.className = 'modal-status ok';
+    setTimeout(closeImportModal, 1200);
+  } catch(err) {
+    status.textContent = 'Error reading PDF: ' + err.message;
+    status.className = 'modal-status err';
+    console.error(err);
+  }
+}
+
+async function readPDFFields(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+  const fields = {};
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const annotations = await page.getAnnotations();
+    for (const ann of annotations) {
+      if (ann.fieldName !== undefined) {
+        const val = ann.fieldValue !== undefined ? ann.fieldValue : (ann.buttonValue || '');
+        if (!(ann.fieldName in fields) || val) {
+          fields[ann.fieldName] = val;
+        }
+      }
+    }
+  }
+  return fields;
+}
+
+function applyImportedFields(fields) {
+  // Character name
+  const name = fields['CharacterName'] || fields['CharacterName 2'] || '';
+  if (name) document.getElementById('char-name').value = name.trim();
+
+  // Class/Level — "Cleric 10" or "Fighter 5 / Wizard 3"
+  const classLevel = fields['ClassLevel'] || '';
+  if (classLevel) {
+    const match = classLevel.match(/([A-Za-z]+)\s*(\d+)/);
+    if (match) {
+      const foundClass = match[1];
+      const foundLevel = match[2];
+      const classEl = document.getElementById('char-class');
+      for (const opt of classEl.options) {
+        if (opt.value.toLowerCase() === foundClass.toLowerCase()) {
+          classEl.value = opt.value;
+          break;
+        }
+      }
+      document.getElementById('char-level').value = foundLevel;
+    }
+  }
+
+  // Spellcasting sheet fields take priority
+  const spellCls = fields['Spellcasting Class 2'] || '';
+  if (spellCls) {
+    const classEl = document.getElementById('char-class');
+    for (const opt of classEl.options) {
+      if (opt.value.toLowerCase() === spellCls.trim().toLowerCase()) {
+        classEl.value = opt.value;
+        break;
+      }
+    }
+  }
+
+  const spellAbility = fields['SpellcastingAbility 2'] || '';
+  if (spellAbility) {
+    const ab = spellAbility.trim().toUpperCase();
+    const abilityEl = document.getElementById('char-ability');
+    for (const opt of abilityEl.options) {
+      if (opt.value === ab) { abilityEl.value = ab; break; }
+    }
+  }
+
+  // Ability scores
+  const abilityMap = { INT: 'INT', WIS: 'WIS', CHA: 'CHA' };
+  const currentAbility = document.getElementById('char-ability').value;
+  if (currentAbility && abilityMap[currentAbility]) {
+    const scoreField = currentAbility;
+    const score = parseInt(fields[scoreField]);
+    if (!isNaN(score)) document.getElementById('char-ability-score').value = score;
+  }
+  // Try all three and pick whichever matches
+  for (const ab of ['INT','WIS','CHA']) {
+    const score = parseInt(fields[ab]);
+    if (!isNaN(score)) {
+      // If no ability set yet, just set the score for the current one
+    }
+  }
+
+  // Race
+  const race = (fields['Race'] || fields['Race '] || '').trim();
+  if (race) document.getElementById('char-race').value = race;
+
+  // Features/Traits — look for Subclass: X
+  const features = fields['Features and Traits'] || '';
+  if (features) {
+    const subMatch = features.match(/Subclass:\s*([^\n,;]+)/i);
+    if (subMatch) {
+      document.getElementById('char-subclass').value = subMatch[1].trim();
+    }
+  }
+
+  onCharChange();
+  renderGranted();
+}
+
+// ══════════════════════════════════════════════════════
+//  RESPONSIVE: mobile filter collapse
+// ══════════════════════════════════════════════════════
+function checkMobileFilters() {
+  if (window.innerWidth <= 768) {
+    document.getElementById('filter-body').classList.add('collapsed');
+    document.getElementById('filter-toggle-arrow').textContent = '▶';
+  }
+}
+window.addEventListener('resize', checkMobileFilters);
+checkMobileFilters();
+
+</script>
+</body>
+</html>
