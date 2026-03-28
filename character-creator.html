@@ -431,7 +431,7 @@ const CLASSES = {
     caster:true,castAbil:'CHA',feats:{1:['Divine Sense','Lay on Hands'],2:['Fighting Style','Divine Smite','Spellcasting'],3:['Sacred Oath','Channel Divinity'],5:['Extra Attack'],6:['Aura of Protection'],11:['Improved Divine Smite'],14:['Cleansing Touch']}},
   'Ranger':{hd:'d10',pri:'DEX & WIS',saves:['STR','DEX'],armor:['Light','Medium','Shields'],skillOpts:['Animal Handling','Athletics','Insight','Investigation','Nature','Perception','Stealth','Survival'],skillPick:3,
     sub:['Hunter','Beast Master','Gloom Stalker','Horizon Walker','Monster Slayer','Fey Wanderer','Swarmkeeper','Drakewarden'],
-    caster:true,castAbil:'WIS',feats:{1:['Favored Enemy','Natural Explorer'],2:['Fighting Style','Spellcasting'],3:['Ranger Archetype'],5:['Extra Attack'],8:["Land's Stride"],14:['Vanish'],18:['Feral Senses'],20:['Foe Slayer']}},
+    caster:true,castAbil:'WIS',feats:{1:['Favored Enemy','Natural Explorer'],2:['Fighting Style','Spellcasting'],3:['Ranger Archetype','Primeval Awareness'],5:['Extra Attack'],8:["Land's Stride"],10:['Hide in Plain Sight'],14:['Vanish'],18:['Feral Senses'],20:['Foe Slayer']}},
   'Rogue':{hd:'d8',pri:'DEX',saves:['DEX','INT'],armor:['Light'],skillOpts:['Acrobatics','Athletics','Deception','Insight','Intimidation','Investigation','Perception','Performance','Persuasion','Sleight of Hand','Stealth'],skillPick:4,
     sub:['Thief','Assassin','Arcane Trickster','Inquisitive','Mastermind','Scout','Swashbuckler','Phantom','Soulknife'],
     caster:false,feats:{1:['Expertise','Sneak Attack (1d6)',"Thieves' Cant"],2:['Cunning Action'],3:['Roguish Archetype'],5:['Uncanny Dodge'],7:['Evasion'],11:['Reliable Talent'],18:['Elusive'],20:['Stroke of Luck']}},
@@ -1126,7 +1126,9 @@ const CLASS_FEAT_DESC = {
   'Natural Explorer':'Choose a favored terrain. In that terrain: double proficiency on INT/WIS checks, can\'t be lost (nonmagically), no difficult terrain cost, alert while foraging, find double food, track at full speed. Gain more terrains at levels 6 and 10.',
   'Deft Explorer (TCoE Optional)':'TCoE optional feature — replaces Natural Explorer. Level 1 — Canny: expertise in one skill you\'re proficient in, plus you learn two languages. Level 6 — Roving: expertise in a second skill, +5 ft speed, climbing speed equal to walking speed, swimming speed equal to walking speed. Level 10 — Tireless: you can\'t be surprised while conscious; your allies have advantage on their initiative if they can see or hear you; once per long rest add 1d8 to your initiative.',
   'Ranger Archetype':'At 3rd level, choose an archetype, granting features at levels 3, 7, 11, and 15.',
+  'Primeval Awareness':'Expend a spell slot (1 minute per slot level) to sense the types of favored enemies in your current area (6 miles in natural terrain, 1 mile in dungeon/urban). You know whether any aberrations, celestials, dragons, elementals, fey, fiends, or undead are present, but not their number or location.',
   "Land's Stride":'Moving through nonmagical difficult terrain costs no extra movement. Pass through nonmagical plants without being slowed or taking damage. Advantage on saves against magically created or manipulated plants.',
+  'Hide in Plain Sight':'Spend 1 minute camouflaging yourself using natural materials. Gain +10 to Stealth checks while you remain motionless and don\'t speak. The camouflage is destroyed when you move.',
   'Vanish':'Use Hide as a bonus action. You can\'t be tracked by nonmagical means unless you choose to leave a trail.',
   'Feral Senses':'No disadvantage on attack rolls against creatures you can\'t see. Aware of the location of invisible creatures within 30 feet (if they aren\'t hidden and you aren\'t blinded/deafened).',
   'Foe Slayer':'Once per turn, add your WIS modifier to one attack roll or damage roll against a favored enemy.',
@@ -2638,6 +2640,7 @@ const CLASS_CHOICES = {
        {name:'Dueling',             desc:'+2 to damage rolls when wielding a melee weapon in one hand with no other weapons.'},
        {name:'Great Weapon Fighting',desc:'Reroll 1s and 2s on damage dice for two-handed/versatile weapons used two-handed (must use new roll).'},
        {name:'Protection',          desc:'Reaction: impose disadvantage on an attack against a creature within 5 ft (requires shield).'},
+       {name:'Blessed Warrior',     src:'TCoE',desc:'Learn 2 cantrips of your choice from the Cleric spell list. They count as Paladin spells for you, and CHA is your spellcasting ability for them. Whenever you gain a Paladin level, you can replace one of these cantrips with another from the Cleric spell list.'},
        {name:'Blind Fighting',      src:'TCoE',desc:'Blindsight 10 ft — sense anything you can\'t see within 10 ft. Effective against invisible creatures and in total darkness.'},
        {name:'Interception',        src:'TCoE',desc:'Reaction: when a creature you can see hits a target within 5 ft of you, roll 1d10 + proficiency bonus and reduce the damage by that amount (requires a shield or a simple or martial weapon).'},
        {name:'Thrown Weapon Fighting',src:'TCoE',desc:'+2 damage on thrown weapon attacks. You can draw a thrown weapon as part of the attack.'},
@@ -2737,9 +2740,10 @@ const CLASS_CHOICES = {
      help:'At 3rd level, your patron bestows a pact boon.',
      counts:[0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
      options:[
-       {name:"Pact of the Chain", desc:'Gain find familiar. Your familiar can attack and can take the forms of imp, pseudodragon, quasit, or sprite.'},
-       {name:"Pact of the Blade", desc:'Create a pact weapon (any melee type) in your hand as an action. Proficient with it; counts as magical. Can bond to a magic weapon.'},
-       {name:"Pact of the Tome",  desc:'Receive a Book of Shadows: gain 3 cantrips from any class list. Enables Book of Ancient Secrets invocation.'},
+       {name:"Pact of the Chain",    desc:'Gain find familiar. Your familiar can attack and can take the forms of imp, pseudodragon, quasit, or sprite.'},
+       {name:"Pact of the Blade",    desc:'Create a pact weapon (any melee type) in your hand as an action. Proficient with it; counts as magical. Can bond to a magic weapon.'},
+       {name:"Pact of the Tome",     desc:'Receive a Book of Shadows: gain 3 cantrips from any class list. Enables Book of Ancient Secrets invocation.'},
+       {name:"Pact of the Talisman", src:'TCoE', desc:'Your patron gifts you an amulet. When the wearer fails an ability check, they can add a d4 to the roll (uses = your proficiency bonus, regained on long rest). If lost, you can replace it with a 1-hour ceremony. Enables Rebuke of the Talisman, Bond of the Talisman, and Protection of the Talisman invocations.'},
      ]},
     {key:'invocations',feature:'Eldritch Invocations',label:'Eldritch Invocations',
      help:'Choose 2 at level 2; learn 1 more at levels 5, 7, 9, 12, 15, and 18.',
@@ -2772,7 +2776,16 @@ const CLASS_CHOICES = {
        {name:"Lifedrinker",          src:'PHB',pre:'12th level, Pact of the Blade', desc:"Add your CHA modifier to the damage dealt by your pact weapon."},
        {name:"Master of Myriad Forms",src:'PHB',pre:'15th level',                   desc:"Cast Alter Self at will."},
        {name:"Visions of Distant Realms",src:'PHB',pre:'15th level',               desc:"Cast Arcane Eye at will."},
-       {name:"Witch Sight",          src:'PHB',pre:'15th level',                    desc:"See the true form of any shapechanger or creature concealed by illusion or transmutation within 30 ft of you."},
+       {name:"Witch Sight",              src:'PHB', pre:'15th level',                           desc:"See the true form of any shapechanger or creature concealed by illusion or transmutation within 30 ft of you."},
+       {name:"Eldritch Mind",            src:'TCoE',                                              desc:"You have advantage on Constitution saving throws made to maintain concentration on a spell."},
+       {name:"Investment of the Chain Master",src:'TCoE',pre:'Pact of the Chain',                desc:"Your familiar gains: fly or swim speed 40 ft (if none); resistance to a damage type from your patron; ability to make attacks as a bonus action with your command; its spell save DC equals your Warlock DC."},
+       {name:"Far Scribe",               src:'TCoE',pre:'5th level, Pact of the Tome',           desc:"A new page appears in your Book of Shadows. As an action, write a creature's name in it (max = proficiency bonus). That creature can use your book as a 10-minute ritual to send or receive a message to you as if using Sending."},
+       {name:"Gift of the Protectors",   src:'TCoE',pre:'9th level, Pact of the Tome',           desc:"A new page appears in your Book of Shadows. Up to proficiency bonus creatures whose names you write in it are protected: when they would drop to 0 HP, they instead drop to 1 HP (each creature can only benefit from this once per long rest)."},
+       {name:"Undying Servitude",        src:'TCoE',pre:'5th level',                             desc:"You can cast Animate Dead without using a spell slot. Once you do, you can't use this invocation again until you finish a long rest."},
+       {name:"Rebuke of the Talisman",   src:'TCoE',pre:'Pact of the Talisman',                 desc:"When the wearer of your talisman is hit by an attacker you can see within 30 ft of you, you can use your reaction to deal psychic damage to the attacker equal to your proficiency bonus and push it up to 10 ft away from the talisman's wearer."},
+       {name:"Protection of the Talisman",src:'TCoE',pre:'7th level, Pact of the Talisman',     desc:"When the wearer of your talisman fails a saving throw, they can add a d4 to the roll, potentially changing the failure to a success. This benefit can be used a number of times equal to your proficiency bonus, regained on a long rest."},
+       {name:"Bond of the Talisman",     src:'TCoE',pre:'12th level, Pact of the Talisman',     desc:"While the wearer of your talisman is on the same plane of existence as you, you can use an action to teleport to the unoccupied space closest to the talisman's wearer. The wearer of your talisman can also do the same to teleport to the space closest to you. This can be used a number of times equal to your proficiency bonus, regained on a long rest."},
+       {name:"Shroud of Shadow",         src:'TCoE',pre:'15th level',                            desc:"You can cast Invisibility at will, without expending a spell slot."},
      ]},
   ],
   'Blood Hunter':[
@@ -2821,6 +2834,8 @@ const OPT_FEATURES = {
   Barbarian:[
     {key:'primalKnowledge',     label:'Primal Knowledge',    src:'TCoE', replaces:null,              minLevel:3,
      desc:'Gain proficiency in 2 skills from the Barbarian list (Animal Handling, Athletics, Intimidation, Nature, Perception, Survival). At 10th level choose any skill to add your proficiency bonus to that skill\'s checks.'},
+    {key:'instinctivePounce',   label:'Instinctive Pounce',  src:'TCoE', replaces:null,              minLevel:7,
+     desc:'As part of the bonus action you take to enter your rage, you can move up to half your speed. This movement doesn\'t provoke opportunity attacks.'},
   ],
   Bard:[
     {key:'magicalInspiration',  label:'Magical Inspiration', src:'TCoE', replaces:null,              minLevel:2,
@@ -2833,6 +2848,8 @@ const OPT_FEATURES = {
      desc:'Bonus action: expend one use of Channel Divinity to regain one expended spell slot of a level no higher than half your proficiency bonus (rounded up). Usable once per long rest (additional uses at levels 6 and 18).'},
     {key:'cantripVersatility',  label:'Cantrip Versatility', src:'TCoE', replaces:null,              minLevel:4,
      desc:'Whenever you reach a level in this class that grants the Ability Score Improvement feature, you can replace one cantrip you learned from this class with another cantrip from the Cleric spell list.'},
+    {key:'blessedStrikes',      label:'Blessed Strikes',     src:'TCoE', replaces:'Divine Strike or Potent Spellcasting', minLevel:8,
+     desc:'Replaces Divine Strike or Potent Spellcasting. Once per turn, when you deal damage to a creature with a weapon attack or a Cleric cantrip, you can also deal 1d8 radiant damage to that creature. When you reach 14th level, the extra damage increases to 2d8.'},
   ],
   Druid:[
     {key:'wildCompanion',       label:'Wild Companion',      src:'TCoE', replaces:null,              minLevel:2,
@@ -2845,6 +2862,8 @@ const OPT_FEATURES = {
      desc:'Whenever you reach a level that grants the Ability Score Improvement feature, you can replace a fighting style you know with another fighting style available to Fighters.'},
   ],
   Monk:[
+    {key:'dedicatedWeapon',     label:'Dedicated Weapon',    src:'TCoE', replaces:null,              minLevel:2,
+     desc:'At the end of a short or long rest, you can touch one simple or martial weapon (not heavy or special) and make it your dedicated weapon until you use this feature again. You gain proficiency with it if you lack it, and it counts as a monk weapon for you.'},
     {key:'kiFueledAttack',      label:'Ki-Fueled Attack',    src:'TCoE', replaces:null,              minLevel:3,
      desc:'If you spend 1 or more ki points as part of your action on your turn, you can make one unarmed strike or monk weapon attack as a bonus action before the end of that turn.'},
     {key:'quickenedHealing',    label:'Quickened Healing',   src:'TCoE', replaces:null,              minLevel:4,
@@ -2864,7 +2883,11 @@ const OPT_FEATURES = {
     {key:'deftExplorer',        label:'Deft Explorer',       src:'TCoE', replaces:'Natural Explorer', minLevel:1,
      desc:'Replaces Natural Explorer. Canny (level 1): expertise in one skill you are proficient in. Roving (level 6): +5 ft walking speed, and you gain a climbing speed and swimming speed equal to your walking speed. Tireless (level 10): as an action, gain temporary HP equal to 1d8 + WIS modifier (proficiency bonus uses per short rest); on short rest, reduce exhaustion level by 1.'},
     {key:'primalAwareness',     label:'Primal Awareness',    src:'TCoE', replaces:'Primeval Awareness',minLevel:3,
-     desc:'Replaces Primeval Awareness. Expend a spell slot to cast each of the following once per long rest for free: Speak with Animals and Beast Sense (level 3), Speak with Plants (level 5), Locate Creature (level 7), Commune with Nature (level 9).'},
+     desc:'Replaces Primeval Awareness. You can cast certain spells once per long rest for free (no slot required): Speak with Animals (level 3), Beast Sense (level 5), Speak with Plants (level 9), Locate Creature (level 13), Commune with Nature (level 17).'},
+    {key:'martialVersatilityRgr',label:'Martial Versatility',src:'TCoE', replaces:null,              minLevel:4,
+     desc:'Whenever you reach a level that grants the Ability Score Improvement feature, you can replace a fighting style you know with another fighting style available to Rangers. This represents a shift in your combat techniques.'},
+    {key:'naturesVeil',         label:"Nature's Veil",       src:'TCoE', replaces:'Hide in Plain Sight',minLevel:10,
+     desc:"Replaces Hide in Plain Sight. As a bonus action, draw on the powers of nature to magically hide: you become invisible until the start of your next turn. You can use this feature a number of times equal to your proficiency bonus, and you regain all uses on a long rest."},
   ],
   Rogue:[
     {key:'steadyAim',           label:'Steady Aim',          src:'TCoE', replaces:null,              minLevel:3,
@@ -3962,6 +3985,47 @@ function getMulticlassSlots() {
   for (const e of entries) total+=getCasterContrib(e.cls,e.level,e.subclass);
   if (total<1) return null;
   return FULL_SLOTS[Math.min(total,20)-1]||null;
+}
+
+// Returns structured spell slot info: {rows:[{label,count}], warlockRow, note}
+function getSpellSlotsInfo() {
+  const ord = lv => lv===1?'1st':lv===2?'2nd':lv===3?'3rd':lv+'th';
+  const allCE = getAllClasses();
+  const anyC = allCE.some(e => (CLASSES[e.cls]||{}).caster || SUBCLASS_CASTER_INFO[e.subclass]);
+  if (!anyC) return null;
+  const mcSlots = getMulticlassSlots();
+  if (mcSlots) {
+    const rows = mcSlots.map((n,i)=>({label:ord(i+1)+' Level',count:n})).filter(r=>r.count>0);
+    const wEntry = allCE.find(e=>e.cls==='Warlock');
+    let warlockRow = null;
+    if (wEntry) { const ws=WARLOCK_SLOTS[(wEntry.level||1)-1]||[]; if(ws[0]) warlockRow={label:`Pact Slots (${ord(ws[1])})`,count:ws[0]}; }
+    return {rows, warlockRow, note:'Combined multiclass slots (PHB p.165)'};
+  }
+  const primary = allCE[0]; if (!primary) return null;
+  if (primary.cls === 'Warlock') {
+    const ws = WARLOCK_SLOTS[(primary.level||1)-1]||[];
+    if (!ws[0]) return {rows:[], note:'Pact Magic — slots unlock at level 1'};
+    return {rows:[{label:`Pact Slots (${ord(ws[1])})`,count:ws[0]}], note:'Pact Magic: all slots recharge on short or long rest'};
+  }
+  let slots = [];
+  const sci = SUBCLASS_CASTER_INFO[primary.subclass];
+  if (sci) slots = THIRD_SLOTS[(primary.level||1)-1]||[];
+  else if (['Wizard','Cleric','Druid','Bard','Sorcerer'].includes(primary.cls)) slots = FULL_SLOTS[(primary.level||1)-1]||[];
+  else if (primary.cls==='Paladin'||primary.cls==='Ranger') slots = HALF_SLOTS[(primary.level||1)-1]||[];
+  else if (primary.cls==='Artificer') slots = ART_SLOTS[(primary.level||1)-1]||[];
+  const rows = slots.map((n,i)=>({label:ord(i+1)+' Level',count:n})).filter(r=>r.count>0);
+  const note = sci ? `1/3-caster — slots from ${primary.subclass} subclass` : null;
+  return {rows, note};
+}
+
+// Returns HTML rows for spell slots to embed in guide .box elements
+function getSpellSlotsHTMLRows() {
+  const info = getSpellSlotsInfo();
+  if (!info) return '';
+  const allRows = info.warlockRow ? [...info.rows, info.warlockRow] : info.rows;
+  if (!allRows.length) return '';
+  return allRows.map(r=>`<div class="row"><span>Slots — ${r.label}</span><span>${r.count}</span></div>`).join('')
+    + (info.note ? `<div class="row"><span style="font-style:italic;font-size:10px;color:#888;">${info.note}</span><span></span></div>` : '');
 }
 
 // All ASI opportunities across all classes, ordered by class then class level
@@ -6001,6 +6065,7 @@ function renderSpells(el) {
     el.appendChild(card);
   }
   // For EK/AT: generate 1st-level spell list from SPELL_REF filtered by school
+  const schoolFilter = isSubclassCaster ? (subCasterInfo.schools||[]) : null;
   const sp1Base = isSubclassCaster
     ? Object.keys(SPELL_REF).filter(n=>{
         const ref=SPELL_REF[n]; if(ref.lv!==1) return false;
@@ -6070,7 +6135,6 @@ function renderSpells(el) {
 
   const lvlOrd = lv => lv===1?'1st':lv===2?'2nd':lv===3?'3rd':lv+'th';
 
-  const schoolFilter = isSubclassCaster ? (subCasterInfo.schools||[]) : null;
   if (spellType !== 'prepared')
   for (let lv = 2; lv <= maxSpellLevel; lv++) {
     const lvSpells = Object.keys(SPELL_REF).filter(n => {
@@ -6772,6 +6836,30 @@ function renderReview(el) {
   armorRow.appendChild(acNote);
   combatCard.appendChild(cg); combatCard.appendChild(armorRow); el.appendChild(combatCard);
 
+  // Spell Slots card (only for casters)
+  {
+    const slotsInfo = getSpellSlotsInfo();
+    if (slotsInfo && (slotsInfo.rows.length || slotsInfo.warlockRow)) {
+      const slotCard = document.createElement('div'); slotCard.className = 'card'; slotCard.style.marginBottom = '14px';
+      slotCard.innerHTML = '<div class="label" style="margin-bottom:8px;">Spell Slots (Per Long Rest)</div>';
+      const slotGrid = document.createElement('div');
+      slotGrid.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px;';
+      const allSlotRows = slotsInfo.warlockRow ? [...slotsInfo.rows, slotsInfo.warlockRow] : slotsInfo.rows;
+      for (const {label, count} of allSlotRows) {
+        const box = document.createElement('div');
+        box.style.cssText = 'text-align:center;min-width:52px;padding:6px 8px;background:rgba(201,168,76,0.1);border:1px solid var(--border);border-radius:4px;';
+        box.innerHTML = `<div style="font-family:'Cinzel Decorative',serif;font-size:20px;color:var(--parchment);">${count}</div><div style="font-size:9px;color:var(--parchment-dim);margin-top:2px;">${label}</div>`;
+        slotGrid.appendChild(box);
+      }
+      slotCard.appendChild(slotGrid);
+      if (slotsInfo.note) {
+        const noteEl = document.createElement('div'); noteEl.style.cssText = 'font-size:11px;color:var(--parchment-dim);font-style:italic;margin-top:4px;';
+        noteEl.textContent = slotsInfo.note; slotCard.appendChild(noteEl);
+      }
+      el.appendChild(slotCard);
+    }
+  }
+
   // Final scores
   const scCard=document.createElement('div'); scCard.className='card'; scCard.style.marginBottom='14px';
   scCard.innerHTML='<div class="label" style="margin-bottom:10px;">Ability Scores</div>';
@@ -7309,7 +7397,8 @@ ${(()=>{
   for(const s of [...(C.otherSpells||[]),...sheetExtra.filter(n=>(SPELL_REF[n]||{}).lv>1)]){const ref=SPELL_REF[s];if(ref){const l=ref.lv;(byLevel[l]||(byLevel[l]=[])).push(s);}}
   const prepRowsCS=getAllClasses().filter(e=>SPELL_TYPE[e.cls]==='prepared'||SPELL_TYPE[e.cls]==='spellbook').map(e=>{const lv=e.isPrimary?C.level:(e.level||1);const cnt=getPreparedCount(e.cls,lv);if(!cnt)return'';const multi=getAllClasses().length>1;return`<div style="margin-bottom:4px;font-style:italic;color:#5a3a10;"><b>${multi?e.cls+' p':'P'}repared/day:</b> ${cnt} spells (${(CLASSES[e.cls]||{}).castAbil||'INT'} mod ${mmod(fs((CLASSES[e.cls]||{}).castAbil||'INT'))>=0?'+':''}${mmod(fs((CLASSES[e.cls]||{}).castAbil||'INT'))} + ${e.cls==='Paladin'||e.cls==='Artificer'?'½ ':''}level ${e.cls==='Paladin'||e.cls==='Artificer'?Math.floor(lv/2):lv})</div>`;}).filter(Boolean).join('');
   const mcSpellRows=Object.entries(C.mcSpells||{}).filter(([,st])=>(st.cantrips||[]).length||(st.spells1||[]).length||(st.otherSpells||[]).length).map(([mcCls,st])=>{const r=[];r.push(`<div style="margin-bottom:2px;font-size:10px;color:#b8860b;font-weight:bold;">${mcCls} (Multiclass)</div>`);if((st.cantrips||[]).length)r.push(`<div style="margin-bottom:4px;"><b>${mcCls} Cantrips:</b> ${st.cantrips.join(', ')}</div>`);if((st.spells1||[]).length)r.push(`<div style="margin-bottom:4px;"><b>${mcCls} 1st Level:</b> ${st.spells1.join(', ')}</div>`);const mb={};for(const s of (st.otherSpells||[])){const lv2=(SPELL_REF[s]||{}).lv;if(lv2!=null&&lv2>1)(mb[lv2]=mb[lv2]||[]).push(s);}Object.entries(mb).sort(([a],[b])=>a-b).forEach(([lv2,sp])=>r.push(`<div style="margin-bottom:4px;"><b>${mcCls} ${parseInt(lv2)===2?'2nd':parseInt(lv2)===3?'3rd':lv2+'th'} Level:</b> ${[...new Set(sp)].join(', ')}</div>`));return r.join('');}).join('');
-  return `<h2>Spells${primCasterCS?` — Save DC ${spDC} · Attack +${spAtk}`:''}</h2><div class="box" style="font-size:12px;">${prepRowsCS}${sheetCantrips.length?`<div style="margin-bottom:4px;"><b>Cantrips:</b> ${sheetCantrips.join(', ')}</div>`:''}${sheetLv1.length?`<div style="margin-bottom:4px;"><b>1st Level:</b> ${sheetLv1.join(', ')}</div>`:''}${Object.entries(byLevel).sort(([a],[b])=>a-b).map(([lv,sp])=>`<div style="margin-bottom:4px;"><b>${lvlOrd(parseInt(lv))}-Level:</b> ${[...new Set(sp)].join(', ')}</div>`).join('')}${mcSpellRows}${C.spellNotes?`<div><b>Notes:</b> ${C.spellNotes}</div>`:''}</div>`;
+  const sheetSlotRows=(()=>{const info=getSpellSlotsInfo();if(!info)return'';const allSR=info.warlockRow?[...info.rows,info.warlockRow]:info.rows;if(!allSR.length)return'';const slotStr=allSR.map(r=>`${r.count}×${r.label}`).join(', ');return`<div style="margin-bottom:6px;"><b>Spell Slots:</b> ${slotStr}${info.note?`<span style="font-size:10px;color:#888;font-style:italic;"> (${info.note})</span>`:''}</div>`;})();
+  return `<h2>Spells${primCasterCS?` — Save DC ${spDC} · Attack +${spAtk}`:''}</h2><div class="box" style="font-size:12px;">${prepRowsCS}${sheetSlotRows}${sheetCantrips.length?`<div style="margin-bottom:4px;"><b>Cantrips:</b> ${sheetCantrips.join(', ')}</div>`:''}${sheetLv1.length?`<div style="margin-bottom:4px;"><b>1st Level:</b> ${sheetLv1.join(', ')}</div>`:''}${Object.entries(byLevel).sort(([a],[b])=>a-b).map(([lv,sp])=>`<div style="margin-bottom:4px;"><b>${lvlOrd(parseInt(lv))}-Level:</b> ${[...new Set(sp)].join(', ')}</div>`).join('')}${mcSpellRows}${C.spellNotes?`<div><b>Notes:</b> ${C.spellNotes}</div>`:''}</div>`;
 })()}
 ${(()=>{
   const parts=[];
@@ -7445,7 +7534,7 @@ function buildCombatGuide(){
 </div>
 ${weaponAtks.length?`<h2>Weapon Attacks</h2><div class="box">${weaponAtks.map(w=>`<div class="row"><span><b>${w.name}</b> <span style="font-size:10px;color:#888;">${w.props}</span></span><span>Hit: ${w.atk} · Dmg: ${w.dmg} ${w.dmgType}</span></div>`).join('')}</div>`:''}
 ${anyCaster?`<h2>Spellcasting</h2><div class="box">${allCE.filter(e=>(CLASSES[e.cls]||{}).caster).map(e=>{const ca=(CLASSES[e.cls]||{}).castAbil||'INT';const dc=8+profB+mmod(fs(ca));const atk=profB+mmod(fs(ca));return allCE.length>1?`<div class="row"><span>${e.cls}</span><span>${ca} — DC ${dc}, +${atk}</span></div>`:`<div class="row"><span>Casting Ability</span><span>${ca} ${fs(ca)} (${mstr(fs(ca))})</span></div><div class="row"><span>Spell Save DC</span><span>${dc}</span></div><div class="row"><span>Spell Attack Bonus</span><span>+${atk}</span></div>`;}).join('')}${(()=>{const lvlOrd=lv=>lv===2?'2nd':lv===3?'3rd':lv+'th';const gx=C.extraSpells||[];const gc=[...new Set([...C.cantrips,...gx.filter(n=>(SPELL_REF[n]||{}).lv===0)])];const g1=[...new Set([...C.spells1,...gx.filter(n=>(SPELL_REF[n]||{}).lv===1)])];const byLv={};for(const s of [...(C.otherSpells||[]),...gx.filter(n=>(SPELL_REF[n]||{}).lv>1)]){const ref=SPELL_REF[s];if(ref&&ref.lv>1){(byLv[ref.lv]||(byLv[ref.lv]=[])).push(s);}}const prepRowsG=getAllClasses().filter(e=>SPELL_TYPE[e.cls]==='prepared'||SPELL_TYPE[e.cls]==='spellbook').map(e=>{const lv=e.isPrimary?C.level:(e.level||1);const cnt=getPreparedCount(e.cls,lv);if(!cnt)return'';const multi=getAllClasses().length>1;const ab=(CLASSES[e.cls]||{}).castAbil||'INT';const half=e.cls==='Paladin'||e.cls==='Artificer';return`<div class="row"><span>${multi?e.cls+' p':'P'}repared/day</span><span>${cnt} spells (${ab} ${mmod(fs(ab))>=0?'+':''}${mmod(fs(ab))} + ${half?'½ ':''}lv ${half?Math.floor(lv/2):lv})</span></div>`;}).filter(Boolean).join('');
-return[prepRowsG,gc.length?`<div class="row"><span>Cantrips</span><span>${gc.join(', ')}</span></div>`:'',g1.length?`<div class="row"><span>1st-Level</span><span>${g1.join(', ')}</span></div>`:'', ...Object.entries(byLv).sort(([a],[b])=>a-b).map(([lv,sp])=>`<div class="row"><span>${lvlOrd(parseInt(lv))}-Level</span><span>${[...new Set(sp)].join(', ')}</span></div>`),...Object.entries(C.mcSpells||{}).filter(([,st])=>(st.cantrips||[]).length||(st.spells1||[]).length||(st.otherSpells||[]).length).flatMap(([mcCls,st])=>{const mcR=[];if((st.cantrips||[]).length)mcR.push(`<div class="row"><span>${mcCls} Cantrips</span><span>${st.cantrips.join(', ')}</span></div>`);if((st.spells1||[]).length)mcR.push(`<div class="row"><span>${mcCls} 1st-Level</span><span>${st.spells1.join(', ')}</span></div>`);const mcB={};for(const s of (st.otherSpells||[])){const lv=(SPELL_REF[s]||{}).lv;if(lv!=null&&lv>1)(mcB[lv]=mcB[lv]||[]).push(s);}Object.entries(mcB).sort(([a],[b])=>a-b).forEach(([lv,sp])=>mcR.push(`<div class="row"><span>${mcCls} ${lvlOrd(parseInt(lv))}-Level</span><span>${[...new Set(sp)].join(', ')}</span></div>`));return mcR;})].join('');})()}</div>`:''}
+return[getSpellSlotsHTMLRows(),prepRowsG,gc.length?`<div class="row"><span>Cantrips</span><span>${gc.join(', ')}</span></div>`:'',g1.length?`<div class="row"><span>1st-Level</span><span>${g1.join(', ')}</span></div>`:'', ...Object.entries(byLv).sort(([a],[b])=>a-b).map(([lv,sp])=>`<div class="row"><span>${lvlOrd(parseInt(lv))}-Level</span><span>${[...new Set(sp)].join(', ')}</span></div>`),...Object.entries(C.mcSpells||{}).filter(([,st])=>(st.cantrips||[]).length||(st.spells1||[]).length||(st.otherSpells||[]).length).flatMap(([mcCls,st])=>{const mcR=[];if((st.cantrips||[]).length)mcR.push(`<div class="row"><span>${mcCls} Cantrips</span><span>${st.cantrips.join(', ')}</span></div>`);if((st.spells1||[]).length)mcR.push(`<div class="row"><span>${mcCls} 1st-Level</span><span>${st.spells1.join(', ')}</span></div>`);const mcB={};for(const s of (st.otherSpells||[])){const lv=(SPELL_REF[s]||{}).lv;if(lv!=null&&lv>1)(mcB[lv]=mcB[lv]||[]).push(s);}Object.entries(mcB).sort(([a],[b])=>a-b).forEach(([lv,sp])=>mcR.push(`<div class="row"><span>${mcCls} ${lvlOrd(parseInt(lv))}-Level</span><span>${[...new Set(sp)].join(', ')}</span></div>`));return mcR;})].join('');})()}</div>`:''}
 ${combatFeatures.length?`<h2>Class Features (Lv 1–${totalCharLevel()})</h2><div class="box">${combatFeatures.map(f=>`<div style="margin-bottom:8px;">${f.src?`<span style="font-size:9px;color:#b8860b;font-family:Cinzel,serif;">${f.src} </span>`:''}<b style="color:#5a2e0a;">${f.name}</b>${f.desc?`<div style="font-size:11px;margin-top:2px;">${f.desc}</div>`:''}</div>`).join('')}</div>`:''}
 ${subFeatures.length?`<h2>${C.subclass} Features</h2><div class="box">${subFeatures.map(f=>`<div style="margin-bottom:8px;"><span style="font-size:9px;color:#b8860b;font-family:Cinzel,serif;">Lv${f.lvl} </span><b style="color:#5a2e0a;">${f.name}</b><div style="font-size:11px;margin-top:2px;">${f.desc}</div></div>`).join('')}</div>`:''}
 ${raceFeatures.length?`<h2>Racial Traits</h2><div class="box">${raceFeatures.map(f=>`<div style="margin-bottom:6px;"><b style="color:#5a2e0a;">${f.name}</b>${f.desc?`<div style="font-size:11px;margin-top:2px;">${f.desc}</div>`:''}</div>`).join('')}</div>`:''}
@@ -7486,7 +7575,7 @@ ${[['Age',ci.age],['Height',ci.height],['Weight',ci.weight],['Eyes',ci.eyes],['S
 <h2>Background: ${C.bg||'—'}</h2>
 <div class="box"><div class="row"><span>Skills</span><span>${bg.skills.join(', ')||'—'}</span></div><div class="row"><span>Feature</span><span>${bg.feature||'—'}</span></div></div>
 ${anyCasterRp?`<h2>Spells</h2><div class="box">${(()=>{const lvlOrd=lv=>lv===2?'2nd':lv===3?'3rd':lv+'th';const gx=C.extraSpells||[];const gc=[...new Set([...C.cantrips,...gx.filter(n=>(SPELL_REF[n]||{}).lv===0)])];const g1=[...new Set([...C.spells1,...gx.filter(n=>(SPELL_REF[n]||{}).lv===1)])];const byLv={};for(const s of [...(C.otherSpells||[]),...gx.filter(n=>(SPELL_REF[n]||{}).lv>1)]){const ref=SPELL_REF[s];if(ref&&ref.lv>1){(byLv[ref.lv]||(byLv[ref.lv]=[])).push(s);}}const prepRowsG=getAllClasses().filter(e=>SPELL_TYPE[e.cls]==='prepared'||SPELL_TYPE[e.cls]==='spellbook').map(e=>{const lv=e.isPrimary?C.level:(e.level||1);const cnt=getPreparedCount(e.cls,lv);if(!cnt)return'';const multi=getAllClasses().length>1;const ab=(CLASSES[e.cls]||{}).castAbil||'INT';const half=e.cls==='Paladin'||e.cls==='Artificer';return`<div class="row"><span>${multi?e.cls+' p':'P'}repared/day</span><span>${cnt} spells (${ab} ${mmod(fs(ab))>=0?'+':''}${mmod(fs(ab))} + ${half?'½ ':''}lv ${half?Math.floor(lv/2):lv})</span></div>`;}).filter(Boolean).join('');
-return[prepRowsG,gc.length?`<div class="row"><span>Cantrips</span><span>${gc.join(', ')}</span></div>`:'',g1.length?`<div class="row"><span>1st-Level</span><span>${g1.join(', ')}</span></div>`:'', ...Object.entries(byLv).sort(([a],[b])=>a-b).map(([lv,sp])=>`<div class="row"><span>${lvlOrd(parseInt(lv))}-Level</span><span>${[...new Set(sp)].join(', ')}</span></div>`),...Object.entries(C.mcSpells||{}).filter(([,st])=>(st.cantrips||[]).length||(st.spells1||[]).length||(st.otherSpells||[]).length).flatMap(([mcCls,st])=>{const mcR=[];if((st.cantrips||[]).length)mcR.push(`<div class="row"><span>${mcCls} Cantrips</span><span>${st.cantrips.join(', ')}</span></div>`);if((st.spells1||[]).length)mcR.push(`<div class="row"><span>${mcCls} 1st-Level</span><span>${st.spells1.join(', ')}</span></div>`);const mcB={};for(const s of (st.otherSpells||[])){const lv=(SPELL_REF[s]||{}).lv;if(lv!=null&&lv>1)(mcB[lv]=mcB[lv]||[]).push(s);}Object.entries(mcB).sort(([a],[b])=>a-b).forEach(([lv,sp])=>mcR.push(`<div class="row"><span>${mcCls} ${lvlOrd(parseInt(lv))}-Level</span><span>${[...new Set(sp)].join(', ')}</span></div>`));return mcR;})].join('');})()}${C.spellNotes?`<div class="row"><span>Notes</span><span>${C.spellNotes}</span></div>`:''}</div>`:''}
+return[getSpellSlotsHTMLRows(),prepRowsG,gc.length?`<div class="row"><span>Cantrips</span><span>${gc.join(', ')}</span></div>`:'',g1.length?`<div class="row"><span>1st-Level</span><span>${g1.join(', ')}</span></div>`:'', ...Object.entries(byLv).sort(([a],[b])=>a-b).map(([lv,sp])=>`<div class="row"><span>${lvlOrd(parseInt(lv))}-Level</span><span>${[...new Set(sp)].join(', ')}</span></div>`),...Object.entries(C.mcSpells||{}).filter(([,st])=>(st.cantrips||[]).length||(st.spells1||[]).length||(st.otherSpells||[]).length).flatMap(([mcCls,st])=>{const mcR=[];if((st.cantrips||[]).length)mcR.push(`<div class="row"><span>${mcCls} Cantrips</span><span>${st.cantrips.join(', ')}</span></div>`);if((st.spells1||[]).length)mcR.push(`<div class="row"><span>${mcCls} 1st-Level</span><span>${st.spells1.join(', ')}</span></div>`);const mcB={};for(const s of (st.otherSpells||[])){const lv=(SPELL_REF[s]||{}).lv;if(lv!=null&&lv>1)(mcB[lv]=mcB[lv]||[]).push(s);}Object.entries(mcB).sort(([a],[b])=>a-b).forEach(([lv,sp])=>mcR.push(`<div class="row"><span>${mcCls} ${lvlOrd(parseInt(lv))}-Level</span><span>${[...new Set(sp)].join(', ')}</span></div>`));return mcR;})].join('');})()}${C.spellNotes?`<div class="row"><span>Notes</span><span>${C.spellNotes}</span></div>`:''}</div>`:''}
 ${classFeats.length?`<h2>Class Features (Lv 1–${totalCharLevel()})</h2><div class="box">${classFeats.map(f=>`<div style="margin-bottom:8px;">${f.src?`<span style="font-size:9px;color:#b8860b;font-family:Cinzel,serif;">${f.src} </span>`:''}<b style="color:#5a2e0a;">${f.name}</b>${f.desc?`<div style="font-size:11px;margin-top:2px;">${f.desc}</div>`:''}</div>`).join('')}</div>`:''}
 ${subFeatures.length?`<h2>${C.subclass} Features</h2><div class="box">${subFeatures.map(f=>`<div style="margin-bottom:8px;"><span style="font-size:9px;color:#b8860b;font-family:Cinzel,serif;">Lv${f.lvl} </span><b style="color:#5a2e0a;">${f.name}</b><div style="font-size:11px;margin-top:2px;">${f.desc}</div></div>`).join('')}</div>`:''}
 ${raceFeatures.length?`<h2>Racial Traits</h2><div class="box">${raceFeatures.map(f=>`<div style="margin-bottom:6px;"><b style="color:#5a2e0a;">${f.name}</b>${f.desc?`<div style="font-size:11px;margin-top:2px;">${f.desc}</div>`:''}</div>`).join('')}</div>`:''}
@@ -7549,7 +7638,7 @@ ${subFeatures.length?`<h2>${C.subclass} Features</h2><div class="box">${subFeatu
 ${raceFeatures.length?`<h2>Racial Traits</h2><div class="box">${raceFeatures.map(f=>`<div style="margin-bottom:8px;"><b style="color:#5a2e0a;">${f.name}</b>${f.desc?`<div style="font-size:11px;margin-top:3px;line-height:1.6;">${f.desc}</div>`:''}</div>`).join('')}</div>`:''}
 ${featData.length?`<h2>Feats</h2><div class="box">${featData.map(f=>`<div style="margin-bottom:8px;"><b style="color:#5a2e0a;">${f.name}</b><div style="font-size:11px;margin-top:3px;line-height:1.6;">${f.desc}</div></div>`).join('')}</div>`:''}
 ${anyCasterG?`<h2>Spells</h2><div class="box">${(()=>{const lvlOrd=lv=>lv===2?'2nd':lv===3?'3rd':lv+'th';const gx=C.extraSpells||[];const gc=[...new Set([...C.cantrips,...gx.filter(n=>(SPELL_REF[n]||{}).lv===0)])];const g1=[...new Set([...C.spells1,...gx.filter(n=>(SPELL_REF[n]||{}).lv===1)])];const byLv={};for(const s of [...(C.otherSpells||[]),...gx.filter(n=>(SPELL_REF[n]||{}).lv>1)]){const ref=SPELL_REF[s];if(ref&&ref.lv>1){(byLv[ref.lv]||(byLv[ref.lv]=[])).push(s);}}const prepRowsG=getAllClasses().filter(e=>SPELL_TYPE[e.cls]==='prepared'||SPELL_TYPE[e.cls]==='spellbook').map(e=>{const lv=e.isPrimary?C.level:(e.level||1);const cnt=getPreparedCount(e.cls,lv);if(!cnt)return'';const multi=getAllClasses().length>1;const ab=(CLASSES[e.cls]||{}).castAbil||'INT';const half=e.cls==='Paladin'||e.cls==='Artificer';return`<div class="row"><span>${multi?e.cls+' p':'P'}repared/day</span><span>${cnt} spells (${ab} ${mmod(fs(ab))>=0?'+':''}${mmod(fs(ab))} + ${half?'½ ':''}lv ${half?Math.floor(lv/2):lv})</span></div>`;}).filter(Boolean).join('');
-return[prepRowsG,gc.length?`<div class="row"><span>Cantrips</span><span>${gc.join(', ')}</span></div>`:'',g1.length?`<div class="row"><span>1st-Level</span><span>${g1.join(', ')}</span></div>`:'', ...Object.entries(byLv).sort(([a],[b])=>a-b).map(([lv,sp])=>`<div class="row"><span>${lvlOrd(parseInt(lv))}-Level</span><span>${[...new Set(sp)].join(', ')}</span></div>`),...Object.entries(C.mcSpells||{}).filter(([,st])=>(st.cantrips||[]).length||(st.spells1||[]).length||(st.otherSpells||[]).length).flatMap(([mcCls,st])=>{const mcR=[];if((st.cantrips||[]).length)mcR.push(`<div class="row"><span>${mcCls} Cantrips</span><span>${st.cantrips.join(', ')}</span></div>`);if((st.spells1||[]).length)mcR.push(`<div class="row"><span>${mcCls} 1st-Level</span><span>${st.spells1.join(', ')}</span></div>`);const mcB={};for(const s of (st.otherSpells||[])){const lv=(SPELL_REF[s]||{}).lv;if(lv!=null&&lv>1)(mcB[lv]=mcB[lv]||[]).push(s);}Object.entries(mcB).sort(([a],[b])=>a-b).forEach(([lv,sp])=>mcR.push(`<div class="row"><span>${mcCls} ${lvlOrd(parseInt(lv))}-Level</span><span>${[...new Set(sp)].join(', ')}</span></div>`));return mcR;})].join('');})()}</div>`:''}
+return[getSpellSlotsHTMLRows(),prepRowsG,gc.length?`<div class="row"><span>Cantrips</span><span>${gc.join(', ')}</span></div>`:'',g1.length?`<div class="row"><span>1st-Level</span><span>${g1.join(', ')}</span></div>`:'', ...Object.entries(byLv).sort(([a],[b])=>a-b).map(([lv,sp])=>`<div class="row"><span>${lvlOrd(parseInt(lv))}-Level</span><span>${[...new Set(sp)].join(', ')}</span></div>`),...Object.entries(C.mcSpells||{}).filter(([,st])=>(st.cantrips||[]).length||(st.spells1||[]).length||(st.otherSpells||[]).length).flatMap(([mcCls,st])=>{const mcR=[];if((st.cantrips||[]).length)mcR.push(`<div class="row"><span>${mcCls} Cantrips</span><span>${st.cantrips.join(', ')}</span></div>`);if((st.spells1||[]).length)mcR.push(`<div class="row"><span>${mcCls} 1st-Level</span><span>${st.spells1.join(', ')}</span></div>`);const mcB={};for(const s of (st.otherSpells||[])){const lv=(SPELL_REF[s]||{}).lv;if(lv!=null&&lv>1)(mcB[lv]=mcB[lv]||[]).push(s);}Object.entries(mcB).sort(([a],[b])=>a-b).forEach(([lv,sp])=>mcR.push(`<div class="row"><span>${mcCls} ${lvlOrd(parseInt(lv))}-Level</span><span>${[...new Set(sp)].join(', ')}</span></div>`));return mcR;})].join('');})()}</div>`:''}
 <h2>Equipment</h2>
 <div class="box">${C.useGold==='gold'?`<div class="row"><span>Starting Gold</span><span>${C.goldAmount||STARTING_GOLD[C.cls]||'—'}</span></div>`:C.useGold==='hybrid'?`<div class="row"><span>Equipment Package</span><span>${resolveEquip()||'—'}</span></div><div class="row"><span>Extra Gold Budget</span><span>${C.hybridGold||'—'}</span></div>`:``}${C.useGold!=='gold'?`<div style="margin-top:6px;font-size:12px;">${equipDetail}</div>`:''} ${C.extraEquip?`<div style="margin-top:6px;font-size:12px;"><b>Additional:</b> ${C.extraEquip}</div>`:''} ${purchItems.length?`<div style="margin-top:8px;"><b>Purchased Items:</b></div>${purchItems.map(i=>`<div class="row"><span>${i.name}</span><span>${i.cost||'—'} gp</span></div>`).join('')}`:''}</div>
 </div></body></html>`;

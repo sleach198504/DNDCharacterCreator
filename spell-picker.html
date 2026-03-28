@@ -343,9 +343,6 @@ body::before {
 .modal-status.ok { color: var(--green); }
 .modal-status.err { color: var(--red); }
 
-/* ── B&W mode ────────────────────────────────────────── */
-body[data-bw] .school-badge { background: #666 !important; color: #eee !important; }
-body[data-bw] .sch-dot { background: #777 !important; }
 
 /* ── School colors ───────────────────────────────────── */
 .sch-Abjur  { background: var(--sch-abjur); }
@@ -419,7 +416,7 @@ body[data-bw] .sch-dot { background: #777 !important; }
       </div>
       <div class="cb-group">
         <div class="cb-label">Class</div>
-        <select id="char-class" class="cb-select" onchange="onCharChange()">
+        <select id="char-class" class="cb-select" onchange="onClassChange()">
           <option value="">— Select Class —</option>
           <option>Artificer</option><option>Bard</option><option>Cleric</option>
           <option>Druid</option><option>Paladin</option><option>Ranger</option>
@@ -428,7 +425,7 @@ body[data-bw] .sch-dot { background: #777 !important; }
       </div>
       <div class="cb-group">
         <div class="cb-label">Level</div>
-        <select id="char-level" class="cb-select" style="min-width:80px" onchange="onCharChange()">
+        <select id="char-level" class="cb-select" style="min-width:80px" onchange="onLevelChange()">
           <option value="">—</option>
           <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
           <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
@@ -449,11 +446,57 @@ body[data-bw] .sch-dot { background: #777 !important; }
       </div>
       <div class="cb-group">
         <div class="cb-label">Subclass</div>
-        <input type="text" id="char-subclass" class="cb-input" placeholder="Life Domain" oninput="onSubclassChange()">
+        <select id="char-subclass" class="cb-select" onchange="onSubclassChange()">
+          <option value="">— Select Subclass —</option>
+        </select>
       </div>
       <div class="cb-group">
         <div class="cb-label">Race</div>
-        <input type="text" id="char-race" class="cb-input" placeholder="Tiefling" oninput="renderGranted()">
+        <select id="char-race" class="cb-select" onchange="renderGranted()">
+          <option value="">— Select Race —</option>
+          <option>Aasimar</option>
+          <option>Air Genasi</option>
+          <option>Bugbear</option>
+          <option>Dark Elf (Drow)</option>
+          <option>Deep Gnome</option>
+          <option>Dragonborn</option>
+          <option>Dwarf (Hill)</option>
+          <option>Dwarf (Mountain)</option>
+          <option>Earth Genasi</option>
+          <option>Elf (High)</option>
+          <option>Elf (Wood)</option>
+          <option>Fairy</option>
+          <option>Fallen (Aasimar)</option>
+          <option>Fire Genasi</option>
+          <option>Firbolg</option>
+          <option>Githyanki</option>
+          <option>Githzerai</option>
+          <option>Gnome (Forest)</option>
+          <option>Gnome (Rock)</option>
+          <option>Goliath</option>
+          <option>Gray Dwarf (Duergar)</option>
+          <option>Half-Elf</option>
+          <option>Half-Orc</option>
+          <option>Halfling (Lightfoot)</option>
+          <option>Halfling (Stout)</option>
+          <option>Harengon</option>
+          <option>Hexblood</option>
+          <option>Human</option>
+          <option>Kalashtar</option>
+          <option>Kenku</option>
+          <option>Kobold</option>
+          <option>Lizardfolk</option>
+          <option>Owlin</option>
+          <option>Protector (Aasimar)</option>
+          <option>Satyr</option>
+          <option>Scourge (Aasimar)</option>
+          <option>Tabaxi</option>
+          <option>Tiefling</option>
+          <option>Tortle</option>
+          <option>Triton</option>
+          <option>Water Genasi</option>
+          <option>Yuan-Ti Pureblood</option>
+        </select>
       </div>
       <div id="prep-display" class="prepared-display" style="display:none">
         <div>
@@ -492,6 +535,7 @@ body[data-bw] .sch-dot { background: #777 !important; }
             <label class="cb-chip checked" data-lv="7"><input type="checkbox" checked hidden>7th</label>
             <label class="cb-chip checked" data-lv="8"><input type="checkbox" checked hidden>8th</label>
             <label class="cb-chip checked" data-lv="9"><input type="checkbox" checked hidden>9th</label>
+            <span class="toggle-chip" onclick="selectAllLevels()">All</span>
           </div>
         </div>
         <div class="filter-group">
@@ -505,6 +549,7 @@ body[data-bw] .sch-dot { background: #777 !important; }
             <label class="cb-chip checked" data-sch="Illus"><input type="checkbox" checked hidden><span class="sch-dot dot-Illus"></span>Illusion</label>
             <label class="cb-chip checked" data-sch="Necro"><input type="checkbox" checked hidden><span class="sch-dot dot-Necro"></span>Necromancy</label>
             <label class="cb-chip checked" data-sch="Trans"><input type="checkbox" checked hidden><span class="sch-dot dot-Trans"></span>Transmutation</label>
+            <span class="toggle-chip" onclick="selectAllSchools()">All</span>
           </div>
         </div>
         <div class="filter-group">
@@ -579,28 +624,32 @@ body[data-bw] .sch-dot { background: #777 !important; }
     <div id="tab2-controls">
       <div class="cb-group">
         <div class="cb-label">Class</div>
-        <select id="t2-class" class="cb-select">
+        <select id="t2-class" class="cb-select" onchange="renderClassBookInline()">
           <option value="">— Select Class —</option>
           <option>Artificer</option><option>Bard</option><option>Cleric</option>
           <option>Druid</option><option>Paladin</option><option>Ranger</option>
           <option>Sorcerer</option><option>Warlock</option><option>Wizard</option>
         </select>
       </div>
-      <div class="cb-group">
-        <div class="cb-label">Max Spell Level</div>
-        <select id="t2-maxlv" class="cb-select">
-          <option value="all">All Levels</option>
-          <option value="0">Cantrips Only</option>
-          <option value="1">Up to 1st</option><option value="2">Up to 2nd</option>
-          <option value="3">Up to 3rd</option><option value="4">Up to 4th</option>
-          <option value="5">Up to 5th</option><option value="6">Up to 6th</option>
-          <option value="7">Up to 7th</option><option value="8">Up to 8th</option>
-          <option value="9">Up to 9th</option>
-        </select>
+      <div class="cb-group" style="flex:1;min-width:260px;">
+        <div class="cb-label">Spell Levels</div>
+        <div class="cb-row" id="t2-levels" style="flex-wrap:wrap;gap:4px;">
+          <label class="cb-chip checked" data-lv="0"><input type="checkbox" checked hidden>Cantrip</label>
+          <label class="cb-chip checked" data-lv="1"><input type="checkbox" checked hidden>1st</label>
+          <label class="cb-chip checked" data-lv="2"><input type="checkbox" checked hidden>2nd</label>
+          <label class="cb-chip checked" data-lv="3"><input type="checkbox" checked hidden>3rd</label>
+          <label class="cb-chip checked" data-lv="4"><input type="checkbox" checked hidden>4th</label>
+          <label class="cb-chip checked" data-lv="5"><input type="checkbox" checked hidden>5th</label>
+          <label class="cb-chip checked" data-lv="6"><input type="checkbox" checked hidden>6th</label>
+          <label class="cb-chip checked" data-lv="7"><input type="checkbox" checked hidden>7th</label>
+          <label class="cb-chip checked" data-lv="8"><input type="checkbox" checked hidden>8th</label>
+          <label class="cb-chip checked" data-lv="9"><input type="checkbox" checked hidden>9th</label>
+          <span class="toggle-chip" onclick="t2SelectAllLevels()">All</span>
+        </div>
       </div>
       <div class="cb-group">
         <div class="cb-label">Source</div>
-        <select id="t2-src" class="cb-select">
+        <select id="t2-src" class="cb-select" onchange="renderClassBookInline()">
           <option value="all">All Sources</option>
           <option value="PHB">PHB only</option>
           <option value="PHB+XGtE">PHB + XGtE</option>
@@ -610,7 +659,7 @@ body[data-bw] .sch-dot { background: #777 !important; }
       <button class="t2-btn" onclick="previewClassBook()">Preview &amp; Print</button>
     </div>
     <div id="t2-preview" class="card" style="font-size:13px; color:var(--parchment-dim); text-align:center; padding:40px;">
-      Select a class and click Preview to generate the reference.
+      Select a class above to display its spell list.
     </div>
   </div><!-- /tab2 -->
 
@@ -630,8 +679,241 @@ body[data-bw] .sch-dot { background: #777 !important; }
   </div>
 </div>
 
-<script src="spell_ref_output.js"></script>
 <script>
+const SPELL_REF = {
+  'Acid Splash':{lv:0,sch:'Conj',cast:'1a',rng:'60ft',conc:false,rit:false,cls:["Sorcerer", "Wizard"],src:'PHB',d:'1-2 creatures within 5ft of each other, DEX save, 1d6 acid (2d6/5th, 3d6/11th, 4d6/17th)'},
+  'Blade Ward':{lv:0,sch:'Abjur',cast:'1a',rng:'Self',conc:false,rit:false,cls:["Bard", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'Resistance to B/P/S damage from weapon attacks until end of next turn'},
+  'Booming Blade':{lv:0,sch:'Evoc',cast:'1a',rng:'Self(5ft)',conc:false,rit:false,cls:["Artificer", "Sorcerer", "Warlock", "Wizard"],src:'TCoE',d:'Melee attack with weapon; if target moves before next turn, 1d8 thunder (2d8/5th, 3d8/11th, 4d8/17th)'},
+  'Chill Touch':{lv:0,sch:'Necro',cast:'1a',rng:'120ft',conc:false,rit:false,cls:["Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'Ranged spell attack, 1d8 necrotic, no healing until your next turn; undead also get disadv on attacks vs you (2d8/5th, 3d8/11th, 4d8/17th)'},
+  'Control Flames':{lv:0,sch:'Trans',cast:'1a',rng:'60ft',conc:false,rit:false,cls:["Druid", "Sorcerer", "Wizard"],src:'XGtE',d:'Expand/extinguish/move nonmagical flame; create simple shapes or change color/brightness'},
+  'Create Bonfire':{lv:0,sch:'Conj',cast:'1a',rng:'60ft',conc:true,rit:false,cls:["Artificer", "Druid", "Sorcerer", "Warlock", "Wizard"],src:'XGtE',d:'5ft cube bonfire, DEX save or 1d8 fire; entering space = same save (2d8/5th, 3d8/11th, 4d8/17th)'},
+  'Dancing Lights':{lv:0,sch:'Evoc',cast:'1a',rng:'120ft',conc:true,rit:false,cls:["Artificer", "Bard", "Sorcerer", "Wizard"],src:'PHB',d:'Up to 4 torch-sized lights or one humanoid-shaped light; move 60ft as bonus action'},
+  'Druidcraft':{lv:0,sch:'Trans',cast:'1a',rng:'30ft',conc:false,rit:false,cls:["Druid"],src:'PHB',d:'Minor nature effects: predict weather, cause plant to bloom, create tiny sensory effect, light/snuff fire'},
+  'Eldritch Blast':{lv:0,sch:'Evoc',cast:'1a',rng:'120ft',conc:false,rit:false,cls:["Warlock"],src:'PHB',d:'Ranged spell attack, 1d10 force. Extra beams at 5th (2), 11th (3), 17th (4); each can hit different target'},
+  'Fire Bolt':{lv:0,sch:'Evoc',cast:'1a',rng:'120ft',conc:false,rit:false,cls:["Artificer", "Sorcerer", "Wizard"],src:'PHB',d:'Ranged spell attack, 1d10 fire (2d10/5th, 3d10/11th, 4d10/17th); ignites flammable objects'},
+  'Friends':{lv:0,sch:'Ench',cast:'1a',rng:'Self',conc:true,rit:false,cls:["Bard", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'Advantage on CHA checks vs one non-hostile creature; when spell ends, creature knows you used magic'},
+  'Frostbite':{lv:0,sch:'Evoc',cast:'1a',rng:'60ft',conc:false,rit:false,cls:["Artificer", "Druid", "Sorcerer", "Warlock", "Wizard"],src:'XGtE',d:'CON save, 1d6 cold, disadvantage on next weapon attack roll (2d6/5th, 3d6/11th, 4d6/17th)'},
+  'Green-Flame Blade':{lv:0,sch:'Evoc',cast:'1a',rng:'Self(5ft)',conc:false,rit:false,cls:["Artificer", "Sorcerer", "Warlock", "Wizard"],src:'TCoE',d:'Melee attack; green fire leaps to second creature within 5ft, CHA mod fire damage (1d8+CHA/5th, 2d8+CHA/11th, 3d8+CHA/17th)'},
+  'Guidance':{lv:0,sch:'Div',cast:'1a',rng:'Touch',conc:true,rit:false,cls:["Artificer", "Cleric", "Druid"],src:'PHB',d:'Add 1d4 to one ability check before spell ends (1 min duration)'},
+  'Gust':{lv:0,sch:'Trans',cast:'1a',rng:'30ft',conc:false,rit:false,cls:["Druid", "Sorcerer", "Wizard"],src:'XGtE',d:'STR save: push creature 5ft, move unattended object, or create harmless wind effect'},
+  'Infestation':{lv:0,sch:'Conj',cast:'1a',rng:'30ft',conc:false,rit:false,cls:["Druid", "Sorcerer", "Warlock", "Wizard"],src:'XGtE',d:'CON save, 1d6 poison, creature moves 5ft random direction (not chosen by caster) (2d6/5th, 3d6/11th, 4d6/17th)'},
+  'Light':{lv:0,sch:'Evoc',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Artificer", "Bard", "Cleric", "Sorcerer", "Wizard"],src:'PHB',d:'Object sheds 20ft bright + 20ft dim light for 1 hour; CON save to resist if worn/held by hostile creature'},
+  'Lightning Lure':{lv:0,sch:'Evoc',cast:'1a',rng:'Self(15ft)',conc:false,rit:false,cls:["Artificer", "Sorcerer", "Warlock", "Wizard"],src:'TCoE',d:'STR save, pull creature up to 10ft toward you, 1d8 lightning if now within 5ft (2d8/5th, 3d8/11th, 4d8/17th)'},
+  'Mage Hand':{lv:0,sch:'Conj',cast:'1a',rng:'30ft',conc:false,rit:false,cls:["Artificer", "Bard", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'Spectral floating hand, 1 min, carry/interact up to 10 lbs; can\'t attack or activate magic items'},
+  'Mending':{lv:0,sch:'Trans',cast:'1min',rng:'Touch',conc:false,rit:false,cls:["Artificer", "Bard", "Cleric", "Druid", "Wizard"],src:'PHB',d:'Repair single break or tear in object up to 1ft in any dimension; no effect on magic items'},
+  'Message':{lv:0,sch:'Trans',cast:'1a',rng:'120ft',conc:false,rit:false,cls:["Artificer", "Bard", "Sorcerer", "Wizard"],src:'PHB',d:'Whisper message to creature; they can reply whisper only you hear; works through barriers (with penalty)'},
+  'Mind Sliver':{lv:0,sch:'Ench',cast:'1a',rng:'60ft',conc:false,rit:false,cls:["Sorcerer", "Warlock", "Wizard"],src:'TCoE',d:'INT save, 1d6 psychic, subtract 1d4 from next saving throw before end of their next turn (2d6/5th, 3d6/11th, 4d6/17th)'},
+  'Minor Illusion':{lv:0,sch:'Illus',cast:'1a',rng:'30ft',conc:false,rit:false,cls:["Bard", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'Sound or image (not both) for 1 min; Investigation check to disbelieve'},
+  'Mold Earth':{lv:0,sch:'Trans',cast:'1a',rng:'30ft',conc:false,rit:false,cls:["Druid", "Sorcerer", "Wizard"],src:'XGtE',d:'Move 5ft cube of earth, create/erase difficult terrain, or create simple patterns in dirt'},
+  'Poison Spray':{lv:0,sch:'Conj',cast:'1a',rng:'10ft',conc:false,rit:false,cls:["Artificer", "Druid", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'CON save, 1d12 poison (2d12/5th, 3d12/11th, 4d12/17th)'},
+  'Prestidigitation':{lv:0,sch:'Trans',cast:'1a',rng:'10ft',conc:false,rit:false,cls:["Artificer", "Bard", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'Minor magical trick: clean/soil, light/snuff, chill/warm/flavor, mark, illusion trinket, color/odor/temperature'},
+  'Produce Flame':{lv:0,sch:'Conj',cast:'1a',rng:'Self',conc:false,rit:false,cls:["Druid"],src:'PHB',d:'Flickering flame, 10ft bright/10ft dim light; throw as ranged spell attack (30ft, 1d8 fire; 2d8/5th, 3d8/11th, 4d8/17th)'},
+  'Ray of Frost':{lv:0,sch:'Evoc',cast:'1a',rng:'60ft',conc:false,rit:false,cls:["Artificer", "Sorcerer", "Wizard"],src:'PHB',d:'Ranged spell attack, 1d8 cold, speed -10ft until start of your next turn (2d8/5th, 3d8/11th, 4d8/17th)'},
+  'Resistance':{lv:0,sch:'Abjur',cast:'1a',rng:'Touch',conc:true,rit:false,cls:["Artificer", "Cleric", "Druid"],src:'PHB',d:'Add 1d4 to one saving throw before spell ends (1 min duration)'},
+  'Sacred Flame':{lv:0,sch:'Evoc',cast:'1a',rng:'60ft',conc:false,rit:false,cls:["Cleric"],src:'PHB',d:'DEX save (no cover benefit), 1d8 radiant (2d8/5th, 3d8/11th, 4d8/17th)'},
+  'Shape Water':{lv:0,sch:'Trans',cast:'1a',rng:'30ft',conc:false,rit:false,cls:["Druid", "Sorcerer", "Wizard"],src:'XGtE',d:'Move 5ft cube of water, change flow, freeze (with shapes), or change color/opacity of water'},
+  'Shillelagh':{lv:0,sch:'Trans',cast:'1ba',rng:'Touch',conc:false,rit:false,cls:["Druid"],src:'PHB',d:'Club or quarterstaff uses spellcasting modifier for attack/damage, deals 1d8 (instead of normal damage), counts as magic; lasts 1 min'},
+  'Shocking Grasp':{lv:0,sch:'Evoc',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Artificer", "Sorcerer", "Wizard"],src:'PHB',d:'Melee spell attack (advantage vs metal armor), 1d8 lightning, can\'t take reactions until start of their next turn (2d8/5th, 3d8/11th, 4d8/17th)'},
+  'Spare the Dying':{lv:0,sch:'Necro',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Artificer", "Cleric"],src:'PHB',d:'Stabilize one living creature at 0 HP (no effect on undead/constructs)'},
+  'Thaumaturgy':{lv:0,sch:'Trans',cast:'1a',rng:'30ft',conc:false,rit:false,cls:["Cleric"],src:'PHB',d:'Minor divine effect: boom voice, flames flicker, tremors, open/close doors, change eye color, create spectral voice'},
+  'Thorn Whip':{lv:0,sch:'Trans',cast:'1a',rng:'30ft',conc:false,rit:false,cls:["Artificer", "Druid"],src:'PHB',d:'Melee spell attack, 1d6 piercing, pull creature up to 10ft toward you (2d6/5th, 3d6/11th, 4d6/17th)'},
+  'Thunderclap':{lv:0,sch:'Evoc',cast:'1a',rng:'Self(5ft)',conc:false,rit:false,cls:["Artificer", "Bard", "Druid", "Sorcerer", "Warlock", "Wizard"],src:'XGtE',d:'CON save for all creatures within 5ft, 1d6 thunder on fail; sound audible 100ft away'},
+  'Toll the Dead':{lv:0,sch:'Necro',cast:'1a',rng:'60ft',conc:false,rit:false,cls:["Cleric", "Warlock", "Wizard"],src:'XGtE',d:'WIS save, 1d8 necrotic (1d12 if already missing HP); 2d8/2d12 at 5th, 3d8/3d12 at 11th, 4d8/4d12 at 17th'},
+  'True Strike':{lv:0,sch:'Div',cast:'1a',rng:'30ft',conc:true,rit:false,cls:["Bard", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'Advantage on next attack roll vs target before end of your next turn (uses concentration for 1 round)'},
+  'Vicious Mockery':{lv:0,sch:'Ench',cast:'1a',rng:'60ft',conc:false,rit:false,cls:["Bard"],src:'PHB',d:'WIS save, 1d4 psychic, disadvantage on next attack roll before end of their next turn (2d4/5th, 3d4/11th, 4d4/17th)'},
+  'Word of Radiance':{lv:0,sch:'Evoc',cast:'1a',rng:'Self(5ft)',conc:false,rit:false,cls:["Cleric"],src:'XGtE',d:'CON save for all chosen creatures within 5ft, 1d6 radiant (2d6/5th, 3d6/11th, 4d6/17th)'},
+  'Absorb Elements':{lv:1,sch:'Abjur',cast:'1 reaction',rng:'Self',conc:false,rit:false,cls:["Artificer", "Druid", "Ranger", "Sorcerer", "Wizard"],src:'XGtE',d:'Reaction to taking acid/cold/fire/lightning/thunder damage; resistance to triggering type, +1d6 same type on next melee attack (+1d6/slot)'},
+  'Alarm':{lv:1,sch:'Abjur',cast:'1min',rng:'30ft',conc:false,rit:true,cls:["Artificer", "Ranger", "Wizard"],src:'PHB',d:'Alert (mental or audible) when Tiny+ creature enters 20ft area; lasts 8hr'},
+  'Animal Friendship':{lv:1,sch:'Ench',cast:'1a',rng:'30ft',conc:false,rit:false,cls:["Bard", "Druid", "Ranger"],src:'PHB',d:'WIS save (fails automatically if INT>3), charm a beast for 24hr (+1 beast/slot)'},
+  'Armor of Agathys':{lv:1,sch:'Abjur',cast:'1a',rng:'Self',conc:false,rit:false,cls:["Warlock"],src:'PHB',d:'Gain 5 temp HP; while they last attacker takes 5 cold damage (+5 temp HP and +5 cold/slot)'},
+  'Arms of Hadar':{lv:1,sch:'Conj',cast:'1a',rng:'Self(10ft)',conc:false,rit:false,cls:["Warlock"],src:'PHB',d:'STR save all in 10ft, 2d6 necrotic, lose reactions until next turn (+1d6/slot)'},
+  'Bane':{lv:1,sch:'Ench',cast:'1a',rng:'30ft',conc:true,rit:false,cls:["Bard", "Cleric"],src:'PHB',d:'CHA save, up to 3 creatures subtract 1d4 from attacks/saves (+1 creature/slot)'},
+  'Bless':{lv:1,sch:'Ench',cast:'1a',rng:'30ft',conc:true,rit:false,cls:["Cleric", "Paladin"],src:'PHB',d:'Up to 3 creatures add 1d4 to attack rolls and saving throws (+1 creature/slot)'},
+  'Burning Hands':{lv:1,sch:'Evoc',cast:'1a',rng:'Self(15ft cone)',conc:false,rit:false,cls:["Sorcerer", "Wizard"],src:'PHB',d:'DEX save, 3d6 fire (+1d6/slot)'},
+  'Catapult':{lv:1,sch:'Trans',cast:'1a',rng:'60ft',conc:false,rit:false,cls:["Artificer", "Sorcerer", "Wizard"],src:'XGtE',d:'Hurl 1-5lb object (per slot level) up to 90ft; DEX save for creature in path, 3d8 bludgeoning (+1d8/slot)'},
+  'Cause Fear':{lv:1,sch:'Necro',cast:'1a',rng:'60ft',conc:true,rit:false,cls:["Warlock", "Wizard"],src:'XGtE',d:'WIS save, frightened 1 min, retry each turn (+1 target/slot at 2nd+)'},
+  'Charm Person':{lv:1,sch:'Ench',cast:'1a',rng:'30ft',conc:false,rit:false,cls:["Bard", "Druid", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'WIS save (advantage if hostile), charmed 1hr (+1 target/slot); creature knows afterward'},
+  'Chromatic Orb':{lv:1,sch:'Evoc',cast:'1a',rng:'90ft',conc:false,rit:false,cls:["Sorcerer", "Wizard"],src:'PHB',d:'Ranged spell attack, 3d8 of chosen element (acid/cold/fire/lightning/poison/thunder) (+1d8/slot)'},
+  'Color Spray':{lv:1,sch:'Illus',cast:'1a',rng:'Self(15ft cone)',conc:false,rit:false,cls:["Sorcerer", "Wizard"],src:'PHB',d:'Roll 6d10; blind creatures up to that total HP (lowest first) until end of next turn (+2d10/slot)'},
+  'Command':{lv:1,sch:'Ench',cast:'1a',rng:'60ft',conc:false,rit:false,cls:["Cleric", "Paladin"],src:'PHB',d:'WIS save, one-word command (Approach/Drop/Flee/Grovel/Halt) for 1 round (+1 target/slot)'},
+  'Compelled Duel':{lv:1,sch:'Ench',cast:'1ba',rng:'30ft',conc:true,rit:false,cls:["Paladin"],src:'PHB',d:'WIS save, must attack only you; disadvantage on attacks vs others for 1 min'},
+  'Comprehend Languages':{lv:1,sch:'Div',cast:'1a',rng:'Self',conc:false,rit:true,cls:["Bard", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'Understand any spoken/written language for 1hr; written takes 1 min/page'},
+  'Create or Destroy Water':{lv:1,sch:'Trans',cast:'1a',rng:'30ft',conc:false,rit:false,cls:["Cleric", "Druid"],src:'PHB',d:'Create 10 gal water (in container or rain) or destroy same amount; +10 gal/slot'},
+  'Cure Wounds':{lv:1,sch:'Evoc',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Artificer", "Bard", "Cleric", "Druid", "Paladin", "Ranger"],src:'PHB',d:'Restore 1d8 + spellcasting mod HP (+1d8/slot); no effect on undead or constructs'},
+  'Detect Evil and Good':{lv:1,sch:'Div',cast:'1a',rng:'Self',conc:true,rit:false,cls:["Cleric", "Paladin"],src:'PHB',d:'Know type and direction of aberration/celestial/elemental/fey/fiend/undead within 30ft for 10min'},
+  'Detect Magic':{lv:1,sch:'Div',cast:'1a',rng:'Self',conc:true,rit:true,cls:["Artificer", "Bard", "Cleric", "Druid", "Paladin", "Ranger", "Sorcerer", "Wizard"],src:'PHB',d:'Sense magic within 30ft; action to see auras and know school; lasts 10min'},
+  'Detect Poison and Disease':{lv:1,sch:'Div',cast:'1a',rng:'Self',conc:true,rit:true,cls:["Cleric", "Druid", "Paladin", "Ranger"],src:'PHB',d:'Sense poisons, poisonous creatures, and diseases within 30ft for 10min'},
+  'Disguise Self':{lv:1,sch:'Illus',cast:'1a',rng:'Self',conc:false,rit:false,cls:["Artificer", "Bard", "Sorcerer", "Wizard"],src:'PHB',d:'Change appearance (height +/-1ft) including clothes/armor; Investigation check to see through; 1hr'},
+  'Dissonant Whispers':{lv:1,sch:'Ench',cast:'1a',rng:'60ft',conc:false,rit:false,cls:["Bard"],src:'PHB',d:'WIS save, 3d6 psychic + use reaction to flee; on save half damage, no movement (+1d6/slot)'},
+  'Divine Favor':{lv:1,sch:'Evoc',cast:'1ba',rng:'Self',conc:true,rit:false,cls:["Paladin"],src:'PHB',d:'Weapon attacks deal +1d4 radiant for up to 1 min'},
+  'Earth Tremor':{lv:1,sch:'Evoc',cast:'1a',rng:'Self(10ft)',conc:false,rit:false,cls:["Bard", "Druid", "Sorcerer", "Wizard"],src:'XGtE',d:'DEX save all in range, 1d6 bludgeoning; loose earth/stone becomes difficult terrain (+1d6/slot)'},
+  'Entangle':{lv:1,sch:'Conj',cast:'1a',rng:'90ft',conc:true,rit:false,cls:["Druid"],src:'PHB',d:'STR save, restrained by plants in 20ft square for 1 min; STR check (action) to escape each turn'},
+  'Expeditious Retreat':{lv:1,sch:'Trans',cast:'1ba',rng:'Self',conc:true,rit:false,cls:["Artificer", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'Dash as a bonus action each turn for up to 10 min'},
+  'Faerie Fire':{lv:1,sch:'Evoc',cast:'1a',rng:'60ft',conc:true,rit:false,cls:["Artificer", "Bard", "Druid"],src:'PHB',d:'DEX save, outline creatures/objects in 20ft cube in color; attackers have advantage; negates invisibility; 1 min'},
+  'False Life':{lv:1,sch:'Necro',cast:'1a',rng:'Self',conc:false,rit:false,cls:["Artificer", "Sorcerer", "Wizard"],src:'PHB',d:'Gain 1d4+4 temporary HP for 1hr (+5 temp HP/slot)'},
+  'Feather Fall':{lv:1,sch:'Trans',cast:'1 reaction',rng:'60ft',conc:false,rit:false,cls:["Artificer", "Bard", "Sorcerer", "Wizard"],src:'PHB',d:'Up to 5 falling creatures descend 60ft/round, take no fall damage; 1 min'},
+  'Find Familiar':{lv:1,sch:'Conj',cast:'1hr',rng:'10ft',conc:false,rit:true,cls:["Wizard"],src:'PHB',d:'Spirit familiar in animal form (bat/cat/hawk/owl/rat/raven/snake/spider/weasel/frog/crab/lizard/octopus/seahorse); share senses'},
+  'Fog Cloud':{lv:1,sch:'Conj',cast:'1a',rng:'120ft',conc:true,rit:false,cls:["Druid", "Ranger", "Sorcerer", "Wizard"],src:'PHB',d:'Heavily obscured 20ft radius sphere for up to 1hr (+20ft radius/slot)'},
+  'Goodberry':{lv:1,sch:'Trans',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Druid", "Ranger"],src:'PHB',d:'Up to 10 berries (24hr); each restores 1 HP and provides full nourishment for 1 day'},
+  'Grease':{lv:1,sch:'Conj',cast:'1a',rng:'60ft',conc:false,rit:false,cls:["Artificer", "Wizard"],src:'PHB',d:'10ft square difficult terrain for 1 min; DEX save or prone when entering area'},
+  'Guiding Bolt':{lv:1,sch:'Evoc',cast:'1a',rng:'120ft',conc:false,rit:false,cls:["Cleric"],src:'PHB',d:'Ranged spell attack, 4d6 radiant; next attack vs target before end of your next turn has advantage (+1d6/slot)'},
+  'Healing Word':{lv:1,sch:'Evoc',cast:'1ba',rng:'60ft',conc:false,rit:false,cls:["Bard", "Cleric", "Druid"],src:'PHB',d:'Restore 1d4 + spellcasting mod HP (+1d4/slot); can combo with another spell same turn'},
+  'Hellish Rebuke':{lv:1,sch:'Evoc',cast:'1 reaction',rng:'60ft',conc:false,rit:false,cls:["Warlock"],src:'PHB',d:'Reaction to taking damage from creature; DEX save, 2d10 fire (+1d10/slot)'},
+  'Heroism':{lv:1,sch:'Ench',cast:'1a',rng:'Touch',conc:true,rit:false,cls:["Bard", "Paladin"],src:'PHB',d:'Target immune to frightened, gains temp HP = spellcasting mod each turn; up to 1 min (+1 target/slot)'},
+  'Hex':{lv:1,sch:'Ench',cast:'1ba',rng:'90ft',conc:true,rit:false,cls:["Warlock"],src:'PHB',d:'+1d6 necrotic on each hit, disadvantage on chosen ability checks; move curse on death; 1hr/8hr/24hr by slot'},
+  "Hunter's Mark":{lv:1,sch:'Div',cast:'1ba',rng:'90ft',conc:true,rit:false,cls:["Ranger"],src:'PHB',d:'+1d6 damage on hits vs target; adv Perception/Survival checks to find it; move on death; 1hr/8hr/24hr by slot'},
+  'Ice Knife':{lv:1,sch:'Conj',cast:'1a',rng:'60ft',conc:false,rit:false,cls:["Druid", "Sorcerer", "Wizard"],src:'XGtE',d:'Ranged spell attack, 1d10 piercing; then 2d6 cold to all within 5ft of impact, DEX save half (+1d6 cold/slot)'},
+  'Identify':{lv:1,sch:'Div',cast:'1min',rng:'Touch',conc:false,rit:true,cls:["Artificer", "Bard", "Wizard"],src:'PHB',d:'Learn all magical properties (and attunement) of object, or one spell affecting a creature'},
+  'Illusory Script':{lv:1,sch:'Illus',cast:'1min',rng:'Touch',conc:false,rit:true,cls:["Bard", "Warlock", "Wizard"],src:'PHB',d:'Message only intended creature/type can read; others see gibberish or chosen message; lasts 10 days'},
+  'Inflict Wounds':{lv:1,sch:'Necro',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Cleric"],src:'PHB',d:'Melee spell attack, 3d10 necrotic (+1d10/slot)'},
+  'Jump':{lv:1,sch:'Trans',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Artificer", "Druid", "Ranger", "Sorcerer", "Wizard"],src:'PHB',d:'Triple the target\'s jump distance for 1 min'},
+  'Longstrider':{lv:1,sch:'Trans',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Artificer", "Bard", "Druid", "Ranger", "Wizard"],src:'PHB',d:'+10ft speed for 1hr (+1 target/slot)'},
+  'Mage Armor':{lv:1,sch:'Abjur',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Sorcerer", "Wizard"],src:'PHB',d:'Unarmored target AC = 13+DEX for 8hr; ends if target dons armor'},
+  'Magic Missile':{lv:1,sch:'Evoc',cast:'1a',rng:'120ft',conc:false,rit:false,cls:["Sorcerer", "Wizard"],src:'PHB',d:'3 darts, each auto-hits for 1d4+1 force; all hit simultaneously (+1 dart/slot)'},
+  'Protection from Evil and Good':{lv:1,sch:'Abjur',cast:'1a',rng:'Touch',conc:true,rit:false,cls:["Cleric", "Paladin", "Warlock", "Wizard"],src:'PHB',d:'vs aberrations/celestials/elementals/fey/fiends/undead: attacks disadv, no charm/frighten/possess; 10 min'},
+  'Purify Food and Drink':{lv:1,sch:'Trans',cast:'1a',rng:'10ft',conc:false,rit:true,cls:["Artificer", "Cleric", "Druid", "Paladin"],src:'PHB',d:'Purify all food and water in 5ft radius sphere'},
+  'Ray of Sickness':{lv:1,sch:'Necro',cast:'1a',rng:'60ft',conc:false,rit:false,cls:["Sorcerer", "Wizard"],src:'PHB',d:'Ranged spell attack, 2d8 poison; CON save or poisoned until end of your next turn (+1d8/slot)'},
+  'Sanctuary':{lv:1,sch:'Abjur',cast:'1ba',rng:'30ft',conc:false,rit:false,cls:["Artificer", "Cleric"],src:'PHB',d:'WIS save to attack warded creature; breaks if target attacks or casts harmful spell; 1 min'},
+  'Searing Smite':{lv:1,sch:'Evoc',cast:'1ba',rng:'Self',conc:true,rit:false,cls:["Paladin"],src:'PHB',d:'Next weapon hit +1d6 fire and target ignites; CON save each turn (1d6 fire); action to extinguish (+1d6/slot)'},
+  'Shield':{lv:1,sch:'Abjur',cast:'1 reaction',rng:'Self',conc:false,rit:false,cls:["Sorcerer", "Wizard"],src:'PHB',d:'Reaction to being hit or Magic Missile; +5 AC (turning hit to miss), immune to Magic Missile until next turn'},
+  'Shield of Faith':{lv:1,sch:'Abjur',cast:'1ba',rng:'60ft',conc:true,rit:false,cls:["Cleric", "Paladin"],src:'PHB',d:'+2 AC to one creature for up to 10 min'},
+  'Silent Image':{lv:1,sch:'Illus',cast:'1a',rng:'60ft',conc:true,rit:false,cls:["Bard", "Sorcerer", "Wizard"],src:'PHB',d:'Visual-only illusion in 15ft cube; Investigation check to disbelieve; move as action; 10 min'},
+  'Sleep':{lv:1,sch:'Ench',cast:'1a',rng:'90ft',conc:false,rit:false,cls:["Bard", "Sorcerer", "Wizard"],src:'PHB',d:'Roll 5d8; creatures up to that total HP fall unconscious (lowest HP first) for 1 min or until damaged (+2d8/slot)'},
+  'Snare':{lv:1,sch:'Abjur',cast:'1min',rng:'Touch',conc:false,rit:false,cls:["Artificer", "Druid", "Ranger", "Wizard"],src:'XGtE',d:'Invisible 5ft circle trap; first Small+ creature: DEX save or restrained (suspended); DC 15 STR/DEX to escape; 8hr'},
+  'Speak with Animals':{lv:1,sch:'Div',cast:'1a',rng:'Self',conc:false,rit:true,cls:["Bard", "Druid", "Ranger"],src:'PHB',d:'Communicate with beasts for 10 min; limited by their intelligence; can negotiate'},
+  "Tasha's Caustic Brew":{lv:1,sch:'Evoc',cast:'1a',rng:'Self(30ft line)',conc:true,rit:false,cls:["Artificer", "Sorcerer", "Wizard"],src:'TCoE',d:'DEX save all in 5ft-wide 30ft line; coated in acid dealing 2d4/turn until wiped off as action (+2d4/slot)'},
+  'Thunderous Smite':{lv:1,sch:'Evoc',cast:'1ba',rng:'Self',conc:true,rit:false,cls:["Paladin"],src:'PHB',d:'Next weapon hit +2d6 thunder, audible 300ft; STR save or pushed 10ft and knocked prone'},
+  'Thunderwave':{lv:1,sch:'Trans',cast:'1a',rng:'Self(15ft cube)',conc:false,rit:false,cls:["Bard", "Druid", "Sorcerer", "Wizard"],src:'PHB',d:'CON save, 2d8 thunder + pushed 10ft on fail; audible 300ft (+1d8/slot)'},
+  'Unseen Servant':{lv:1,sch:'Conj',cast:'1a',rng:'60ft',conc:false,rit:true,cls:["Bard", "Warlock", "Wizard"],src:'PHB',d:'Invisible mindless servant (STR 2, 1HP) for 1hr; performs simple tasks within 60ft of you'},
+  'Witch Bolt':{lv:1,sch:'Evoc',cast:'1a',rng:'30ft',conc:true,rit:false,cls:["Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'Ranged spell attack, 1d12 lightning; use action each turn to auto-deal 1d12 more (+1d12/slot); ends if target moves beyond range'},
+  'Wrathful Smite':{lv:1,sch:'Evoc',cast:'1ba',rng:'Self',conc:true,rit:false,cls:["Paladin"],src:'PHB',d:'Next weapon hit +1d6 psychic; WIS save or frightened (STR/WIS check action each turn to end)'},
+  'Zephyr Strike':{lv:1,sch:'Trans',cast:'1ba',rng:'Self',conc:true,rit:false,cls:["Ranger"],src:'XGtE',d:'No opportunity attacks; on one attack this turn: advantage + +1d8 force on hit, then +30ft speed; 1 min'},
+  'Aid':{lv:2,sch:'Abjur',cast:'1a',rng:'30ft',conc:false,rit:false,cls:["Artificer", "Bard", "Cleric", "Paladin"],src:'PHB',d:'Up to 3 creatures gain +5 max HP and current HP for 8hr (+5 per target/slot)'},
+  'Alter Self':{lv:2,sch:'Trans',cast:'1a',rng:'Self',conc:true,rit:false,cls:["Artificer", "Sorcerer", "Wizard"],src:'PHB',d:'Aquatic Adaptation (breathe water/swim 40ft), Change Appearance (height +/-1ft), or Natural Weapons (1d6+STR); 1hr'},
+  'Arcane Lock':{lv:2,sch:'Abjur',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Artificer", "Wizard"],src:'PHB',d:'Lock door/window/chest until dispelled; designated creatures pass freely; knock DC+10'},
+  'Barkskin':{lv:2,sch:'Trans',cast:'1a',rng:'Touch',conc:true,rit:false,cls:["Druid", "Ranger"],src:'PHB',d:'Target AC cannot be lower than 16 for up to 1hr'},
+  'Blindness/Deafness':{lv:2,sch:'Necro',cast:'1a',rng:'30ft',conc:false,rit:false,cls:["Bard", "Cleric", "Sorcerer", "Wizard"],src:'PHB',d:'CON save, blinded or deafened for 1 min; retry save each turn (+1 target/slot)'},
+  'Blur':{lv:2,sch:'Illus',cast:'1a',rng:'Self',conc:true,rit:false,cls:["Artificer", "Sorcerer", "Wizard"],src:'PHB',d:'Attackers have disadvantage vs you (not effective vs blind creatures) for up to 1 min'},
+  'Calm Emotions':{lv:2,sch:'Ench',cast:'1a',rng:'60ft',conc:true,rit:false,cls:["Bard", "Cleric"],src:'PHB',d:'WIS save, suppress charm/fear effects OR make creatures indifferent in 20ft sphere for 1 min'},
+  'Cloud of Daggers':{lv:2,sch:'Conj',cast:'1a',rng:'60ft',conc:true,rit:false,cls:["Bard", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'5ft cube of spinning daggers; 4d4 slashing to creatures entering or starting turn inside (+2d4/slot)'},
+  'Crown of Madness':{lv:2,sch:'Ench',cast:'1a',rng:'120ft',conc:true,rit:false,cls:["Bard", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'WIS save, charmed; must attack nearest other creature each turn; you must use action each turn to maintain'},
+  'Darkness':{lv:2,sch:'Evoc',cast:'1a',rng:'60ft',conc:true,rit:false,cls:["Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'15ft radius magical darkness for 10 min; blocks darkvision; ordinary light and lower-level spells cannot illuminate'},
+  'Darkvision':{lv:2,sch:'Trans',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Druid", "Ranger", "Sorcerer", "Wizard"],src:'PHB',d:'Target gains 60ft darkvision for 8hr'},
+  'Detect Thoughts':{lv:2,sch:'Div',cast:'1a',rng:'Self',conc:true,rit:false,cls:["Bard", "Sorcerer", "Wizard"],src:'PHB',d:'Read surface thoughts within 30ft; action to probe deeper (WIS save); detect creature presence; 1 min'},
+  'Earthbind':{lv:2,sch:'Trans',cast:'1a',rng:'300ft',conc:true,rit:false,cls:["Druid", "Sorcerer", "Warlock", "Wizard"],src:'XGtE',d:'STR save, flying speed reduced to 0 for 1 min (does not affect other movement types)'},
+  'Enhance Ability':{lv:2,sch:'Trans',cast:'1a',rng:'Touch',conc:true,rit:false,cls:["Artificer", "Bard", "Cleric", "Druid", "Sorcerer"],src:'PHB',d:'Advantage on checks with chosen ability; Bull\'s Str (+STR carry), Cat\'s Grace (no fall dmg), Bear\'s End (1d6 temp HP each turn), etc.; 1hr (+1 target/slot)'},
+  'Enlarge/Reduce':{lv:2,sch:'Trans',cast:'1a',rng:'30ft',conc:true,rit:false,cls:["Artificer", "Sorcerer", "Wizard"],src:'PHB',d:'CON save (unwilling); Enlarge: Large size +1d4 dmg, adv STR checks/saves; Reduce: Tiny -1d4 dmg, disadv STR; 1 min'},
+  'Enthrall':{lv:2,sch:'Ench',cast:'1a',rng:'60ft',conc:false,rit:false,cls:["Bard", "Warlock"],src:'PHB',d:'WIS save, creatures distracted by you (disadvantage on Perception not directed at you) for 1 min'},
+  'Find Steed':{lv:2,sch:'Conj',cast:'10min',rng:'30ft',conc:false,rit:false,cls:["Paladin"],src:'PHB',d:'Summon celestial/fey/fiend spirit as loyal steed (warhorse/pony/camel/elk/mastiff); share bond and spells'},
+  'Flame Blade':{lv:2,sch:'Evoc',cast:'1ba',rng:'Self',conc:true,rit:false,cls:["Druid"],src:'PHB',d:'Fiery scimitar (melee spell attack, 3d6 fire, 10ft bright + 10ft dim light); +1d6 per 2 slots above 2nd'},
+  'Flaming Sphere':{lv:2,sch:'Evoc',cast:'1a',rng:'60ft',conc:true,rit:false,cls:["Druid", "Wizard"],src:'PHB',d:'5ft sphere, DEX save 2d6 fire to adjacent; bonus action to move 30ft; lasts 1 min (+1d6/slot)'},
+  'Gentle Repose':{lv:2,sch:'Necro',cast:'1a',rng:'Touch',conc:false,rit:true,cls:["Cleric", "Wizard"],src:'PHB',d:'Preserve corpse 10 days; extends resurrection window by 10 days; prevents undead transformation'},
+  'Gust of Wind':{lv:2,sch:'Evoc',cast:'1a',rng:'Self(60ft line)',conc:true,rit:false,cls:["Druid", "Sorcerer", "Wizard"],src:'PHB',d:'Strong wind 60ft line; STR save or pushed 15ft; movement cost doubled; disperses gas/fog; 1 min'},
+  'Heat Metal':{lv:2,sch:'Trans',cast:'1a',rng:'60ft',conc:true,rit:false,cls:["Artificer", "Bard", "Druid"],src:'PHB',d:'Metal object glows red-hot; 2d8 fire; CON save or drop item; bonus action to deal dmg again; 1 min (+1d8/slot)'},
+  'Hold Person':{lv:2,sch:'Ench',cast:'1a',rng:'60ft',conc:true,rit:false,cls:["Bard", "Cleric", "Druid", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'WIS save, humanoid paralyzed 1 min; retry each turn (+1 target/slot)'},
+  'Invisibility':{lv:2,sch:'Illus',cast:'1a',rng:'Touch',conc:true,rit:false,cls:["Artificer", "Bard", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'Invisible until attacking or casting; 1hr (+1 target/slot)'},
+  'Knock':{lv:2,sch:'Trans',cast:'1a',rng:'60ft',conc:false,rit:false,cls:["Bard", "Sorcerer", "Wizard"],src:'PHB',d:'Open locked/barred/held object; knock audible 300ft; suppresses Arcane Lock for 10 min'},
+  'Lesser Restoration':{lv:2,sch:'Abjur',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Artificer", "Bard", "Cleric", "Druid", "Paladin", "Ranger"],src:'PHB',d:'End one condition (blinded/deafened/paralyzed/poisoned) or one disease'},
+  'Levitate':{lv:2,sch:'Trans',cast:'1a',rng:'60ft',conc:true,rit:false,cls:["Artificer", "Sorcerer", "Wizard"],src:'PHB',d:'CON save (unwilling), rise/hover up to 20ft; move up/down 20ft as action; 10 min'},
+  'Magic Weapon':{lv:2,sch:'Trans',cast:'1ba',rng:'Touch',conc:true,rit:false,cls:["Artificer", "Paladin", "Wizard"],src:'PHB',d:'Nonmagical weapon becomes +1 magic weapon; +2 at 4th level slot, +3 at 6th; 1hr'},
+  'Mirror Image':{lv:2,sch:'Illus',cast:'1a',rng:'Self',conc:false,rit:false,cls:["Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'3 duplicates; roll d20 when attacked: 6+ (3 copies), 8+ (2 copies), 11+ (1 copy) = hits duplicate instead; 1 min'},
+  'Misty Step':{lv:2,sch:'Conj',cast:'1ba',rng:'Self',conc:false,rit:false,cls:["Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'Teleport up to 30ft to visible unoccupied space'},
+  'Moonbeam':{lv:2,sch:'Evoc',cast:'1a',rng:'120ft',conc:true,rit:false,cls:["Druid"],src:'PHB',d:'5ft radius cylinder, CON save 2d10 radiant (shapechangers fail auto and revert); move 60ft/action; 1 min (+1d10/slot)'},
+  'Pass Without Trace':{lv:2,sch:'Abjur',cast:'1a',rng:'Self',conc:true,rit:false,cls:["Druid", "Ranger"],src:'PHB',d:'+10 Stealth bonus for self and companions; cannot be tracked by nonmagical means; 1hr'},
+  'Prayer of Healing':{lv:2,sch:'Evoc',cast:'10min',rng:'30ft',conc:false,rit:false,cls:["Cleric"],src:'PHB',d:'Up to 6 creatures restore 2d8 + spellcasting mod HP; only outside combat (+1d8/slot)'},
+  'Protection from Poison':{lv:2,sch:'Abjur',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Artificer", "Cleric", "Druid", "Paladin", "Ranger"],src:'PHB',d:'Neutralize one poison; advantage on saves vs poisoned; resistance to poison damage; 1hr'},
+  'Rope Trick':{lv:2,sch:'Trans',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Artificer", "Wizard"],src:'PHB',d:'Rope rises 60ft; extradimensional space at top holds 8 creatures; 1hr'},
+  'Scorching Ray':{lv:2,sch:'Evoc',cast:'1a',rng:'120ft',conc:false,rit:false,cls:["Sorcerer", "Wizard"],src:'PHB',d:'3 ranged spell attacks, each 2d6 fire (+1 ray/slot)'},
+  'See Invisibility':{lv:2,sch:'Div',cast:'1a',rng:'Self',conc:false,rit:false,cls:["Artificer", "Bard", "Sorcerer", "Wizard"],src:'PHB',d:'See invisible and ethereal creatures/objects for 1hr'},
+  'Shadow Blade':{lv:2,sch:'Illus',cast:'1ba',rng:'Self',conc:true,rit:false,cls:["Sorcerer", "Warlock", "Wizard"],src:'XGtE',d:'Create psychic sword (2d8 psychic, finesse, light, thrown 20/60ft); advantage in dim light or darkness; 1 min; +1d8/2 slots above 2nd'},
+  'Shatter':{lv:2,sch:'Evoc',cast:'1a',rng:'60ft',conc:false,rit:false,cls:["Bard", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'CON save, 3d8 thunder in 10ft sphere; double damage vs nonmagical inorganic objects; audible 300ft (+1d8/slot)'},
+  'Silence':{lv:2,sch:'Illus',cast:'1a',rng:'120ft',conc:true,rit:true,cls:["Bard", "Cleric", "Ranger"],src:'PHB',d:'20ft radius no sound for 10 min; immune to thunder; no verbal components possible inside'},
+  'Spider Climb':{lv:2,sch:'Trans',cast:'1a',rng:'Touch',conc:true,rit:false,cls:["Artificer", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'Climb walls and ceilings (hands free); 1hr'},
+  'Spike Growth':{lv:2,sch:'Trans',cast:'1a',rng:'150ft',conc:true,rit:false,cls:["Druid", "Ranger"],src:'PHB',d:'20ft radius difficult terrain for 10 min; 2d4 piercing per 5ft of movement through area'},
+  'Spiritual Weapon':{lv:2,sch:'Evoc',cast:'1ba',rng:'60ft',conc:false,rit:false,cls:["Cleric"],src:'PHB',d:'Spectral weapon; bonus action melee spell attack (1d8 + spellcasting mod force); move 20ft/bonus action; 1 min (+1d8 per 2 slots above 2nd)'},
+  'Suggestion':{lv:2,sch:'Ench',cast:'1a',rng:'30ft',conc:true,rit:false,cls:["Bard", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'WIS save, target follows reasonable suggestion for up to 8hr or until task complete'},
+  'Warding Bond':{lv:2,sch:'Abjur',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Cleric"],src:'PHB',d:'Bond with creature; both get +1 AC/saves, resistance to all damage; caster takes same damage; within 60ft; 1hr'},
+  'Web':{lv:2,sch:'Conj',cast:'1a',rng:'60ft',conc:true,rit:false,cls:["Sorcerer", "Wizard"],src:'PHB',d:'20ft cube difficult terrain; DEX save or restrained; STR DC 15 check to escape; 1hr; flammable'},
+  'Animate Dead':{lv:3,sch:'Necro',cast:'1min',rng:'10ft',conc:false,rit:false,cls:["Cleric", "Wizard"],src:'PHB',d:'Animate medium/small corpse as zombie or skeleton; control for 24hr (+2 undead/slot above 3rd)'},
+  'Aura of Vitality':{lv:3,sch:'Evoc',cast:'1a',rng:'Self(30ft)',conc:true,rit:false,cls:["Paladin"],src:'PHB',d:'Bonus action: 2d6 healing to one visible creature within 30ft; 1 min'},
+  'Beacon of Hope':{lv:3,sch:'Abjur',cast:'1a',rng:'30ft',conc:true,rit:false,cls:["Cleric"],src:'PHB',d:'Up to 3 creatures: advantage on WIS saves and death saves, maximum HP regained from healing; 1 min'},
+  'Bestow Curse':{lv:3,sch:'Necro',cast:'1a',rng:'Touch',conc:true,rit:false,cls:["Bard", "Cleric", "Wizard"],src:'PHB',d:'WIS save; choose curse: disadv on ability checks/saves vs chosen ability, or disadv on attacks vs you, or lose action; 1min (8hr/no conc at 4th, 24hr at 5th, permanent at 7th+)'},
+  'Blink':{lv:3,sch:'Trans',cast:'1a',rng:'Self',conc:false,rit:false,cls:["Artificer", "Sorcerer", "Wizard"],src:'PHB',d:'At end of each turn roll d20; 11+ shift to Ethereal Plane until start of next turn; 1 min'},
+  'Call Lightning':{lv:3,sch:'Conj',cast:'1a',rng:'120ft',conc:true,rit:false,cls:["Druid"],src:'PHB',d:'Summon storm cloud; action: 3d10 lightning in 5ft cylinder (4d10 in actual storm), DEX save half; 10 min (+1d10/slot)'},
+  'Counterspell':{lv:3,sch:'Abjur',cast:'1 reaction',rng:'60ft',conc:false,rit:false,cls:["Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'Automatically counter spell of 3rd level or lower; for higher level make ability check DC 10 + spell level'},
+  'Create Food and Water':{lv:3,sch:'Conj',cast:'1a',rng:'30ft',conc:false,rit:false,cls:["Cleric", "Paladin"],src:'PHB',d:'45 lbs of food and 30 gallons of water; feeds up to 15 humanoids or 5 mounts for 1 day'},
+  'Daylight':{lv:3,sch:'Evoc',cast:'1a',rng:'60ft',conc:false,rit:false,cls:["Cleric", "Druid", "Paladin", "Ranger", "Sorcerer"],src:'PHB',d:'60ft radius bright light, 30ft more dim; dispels darkness spells of 3rd level or lower; 1hr'},
+  'Dispel Magic':{lv:3,sch:'Abjur',cast:'1a',rng:'120ft',conc:false,rit:false,cls:["Artificer", "Bard", "Cleric", "Druid", "Paladin", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'End all spells of 3rd level or lower on target; higher level spells require ability check DC 10+spell level'},
+  'Enemies Abound':{lv:3,sch:'Ench',cast:'1a',rng:'120ft',conc:true,rit:false,cls:["Bard", "Sorcerer", "Warlock", "Wizard"],src:'XGtE',d:'INT save, creature treats all creatures as enemies; randomly attacks nearest each turn; 1 min'},
+  'Fear':{lv:3,sch:'Illus',cast:'1a',rng:'Self(30ft cone)',conc:true,rit:false,cls:["Bard", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'WIS save, frightened and must use action to flee; can retry WIS save each turn (out of sight); 1 min'},
+  'Fireball':{lv:3,sch:'Evoc',cast:'1a',rng:'150ft',conc:false,rit:false,cls:["Sorcerer", "Wizard"],src:'PHB',d:'20ft radius sphere, DEX save, 8d6 fire (+1d6/slot)'},
+  'Fly':{lv:3,sch:'Trans',cast:'1a',rng:'Touch',conc:true,rit:false,cls:["Artificer", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'60ft fly speed for 10 min (+1 target/slot)'},
+  'Gaseous Form':{lv:3,sch:'Trans',cast:'1a',rng:'Touch',conc:true,rit:false,cls:["Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'Transform into gas (15ft fly speed, can pass through cracks); resistance to B/P/S; can\'t attack/cast; 1hr'},
+  'Glyph of Warding':{lv:3,sch:'Abjur',cast:'1hr',rng:'Touch',conc:false,rit:false,cls:["Artificer", "Bard", "Cleric", "Wizard"],src:'PHB',d:'Trap glyph: explosive (6d8 dmg, save half) or stored spell (up to 3rd level); triggers on condition; until dispelled'},
+  'Haste':{lv:3,sch:'Trans',cast:'1a',rng:'30ft',conc:true,rit:false,cls:["Artificer", "Sorcerer", "Wizard"],src:'PHB',d:'Double speed, +2 AC, advantage DEX saves, extra action (attack/Dash/Disengage/Hide/Use Object); lethargy round when ends; 1 min'},
+  'Hunger of Hadar':{lv:3,sch:'Conj',cast:'1a',rng:'150ft',conc:true,rit:false,cls:["Warlock"],src:'PHB',d:'20ft sphere darkness/cold; start of turn: DEX save 2d6 cold; end of turn: CON save 2d6 acid; blind, difficult terrain; 1 min'},
+  'Hypnotic Pattern':{lv:3,sch:'Illus',cast:'1a',rng:'120ft',conc:true,rit:false,cls:["Bard", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'WIS save, charmed and incapacitated in 30ft cube; wake if damaged or shaken; 1 min'},
+  "Leomund's Tiny Hut":{lv:3,sch:'Evoc',cast:'1min',rng:'Self',conc:false,rit:true,cls:["Bard", "Wizard"],src:'PHB',d:'10ft radius dome; blocks weather; up to 9 creatures inside; blocks magic entering; 8hr'},
+  'Lightning Bolt':{lv:3,sch:'Evoc',cast:'1a',rng:'Self(100ft line)',conc:false,rit:false,cls:["Sorcerer", "Wizard"],src:'PHB',d:'5ft wide 100ft line, DEX save, 8d6 lightning (+1d6/slot); sets fire to flammable objects'},
+  'Magic Circle':{lv:3,sch:'Abjur',cast:'1min',rng:'10ft',conc:false,rit:false,cls:["Cleric", "Paladin", "Warlock", "Wizard"],src:'PHB',d:'10ft diameter cylinder; chosen creature type (aberration/celestial/elemental/fey/fiend/undead) cannot enter or possess; 1hr (+1hr/slot)'},
+  'Major Image':{lv:3,sch:'Illus',cast:'1a',rng:'120ft',conc:true,rit:false,cls:["Bard", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'20ft cube illusion with sound/smell/temperature; investigation check to disbelieve; 10 min (permanent at 6th+)'},
+  'Mass Healing Word':{lv:3,sch:'Evoc',cast:'1ba',rng:'60ft',conc:false,rit:false,cls:["Bard", "Cleric"],src:'PHB',d:'Up to 6 creatures restore 1d4 + spellcasting mod HP (+1d4/slot)'},
+  'Nondetection':{lv:3,sch:'Div',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Bard", "Ranger", "Wizard"],src:'PHB',d:'Target hidden from divination magic and scrying for 8hr'},
+  'Plant Growth':{lv:3,sch:'Trans',cast:'1a',rng:'150ft',conc:false,rit:false,cls:["Bard", "Druid", "Ranger"],src:'PHB',d:'Instant: dense vegetation (difficult terrain, 4x movement cost) in 100ft radius; OR 8hr casting to enrich crops'},
+  'Protection from Energy':{lv:3,sch:'Abjur',cast:'1a',rng:'Touch',conc:true,rit:false,cls:["Artificer", "Cleric", "Druid", "Ranger", "Sorcerer", "Wizard"],src:'PHB',d:'Resistance to chosen energy type (acid/cold/fire/lightning/thunder) for up to 1hr'},
+  'Remove Curse':{lv:3,sch:'Abjur',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Cleric", "Paladin", "Warlock", "Wizard"],src:'PHB',d:'End all curses affecting target; also ends forced attunement to cursed magic items'},
+  'Revivify':{lv:3,sch:'Conj',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Artificer", "Cleric", "Paladin"],src:'PHB',d:'Restore creature dead within 1 minute to 1 HP (300gp diamond consumed); soul must be willing and free'},
+  'Sending':{lv:3,sch:'Evoc',cast:'1a',rng:'Unlimited',conc:false,rit:false,cls:["Bard", "Cleric", "Wizard"],src:'PHB',d:'Send 25-word message to familiar creature anywhere (even other planes); target can reply'},
+  'Sleet Storm':{lv:3,sch:'Conj',cast:'1a',rng:'150ft',conc:true,rit:false,cls:["Druid", "Sorcerer", "Wizard"],src:'PHB',d:'40ft cylinder difficult terrain and heavily obscured for 1 min; DEX save or prone; concentration checks to cast'},
+  'Slow':{lv:3,sch:'Trans',cast:'1a',rng:'120ft',conc:true,rit:false,cls:["Sorcerer", "Wizard"],src:'PHB',d:'WIS save, up to 6 targets: half speed, -2 AC/DEX saves, no reactions, only 1 action or bonus action; 1 min'},
+  'Speak with Dead':{lv:3,sch:'Necro',cast:'1a',rng:'10ft',conc:false,rit:false,cls:["Bard", "Cleric"],src:'PHB',d:'Ask corpse 5 questions (must have mouth, dead <10 days or until last death); answers limited by knowledge'},
+  'Spirit Guardians':{lv:3,sch:'Conj',cast:'1a',rng:'Self(15ft)',conc:true,rit:false,cls:["Cleric"],src:'PHB',d:'Spectral spirits in 15ft aura; chosen creatures half speed, 3d8 radiant or necrotic (WIS save half); 10 min (+1d8/slot)'},
+  'Tongues':{lv:3,sch:'Div',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Bard", "Cleric", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'Speak and understand any language for 1hr'},
+  'Vampiric Touch':{lv:3,sch:'Necro',cast:'1a',rng:'Self',conc:true,rit:false,cls:["Warlock", "Wizard"],src:'PHB',d:'Melee spell attack, 3d6 necrotic, heal HP = half damage dealt; repeat each turn as action; 1 min (+1d6/slot)'},
+  'Water Breathing':{lv:3,sch:'Trans',cast:'1a',rng:'30ft',conc:false,rit:true,cls:["Artificer", "Druid", "Ranger", "Sorcerer", "Wizard"],src:'PHB',d:'Up to 10 creatures can breathe underwater for 24hr'},
+  'Wind Wall':{lv:3,sch:'Evoc',cast:'1a',rng:'120ft',conc:true,rit:false,cls:["Druid", "Ranger"],src:'PHB',d:'50ft long 15ft tall wall; deflects arrows/bolts/gases; Small+ creatures STR save or 3d8 bludgeoning; 1 min'},
+  'Banishment':{lv:4,sch:'Abjur',cast:'1a',rng:'60ft',conc:true,rit:false,cls:["Cleric", "Paladin", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'CHA save; native plane creatures incapacitated until end of your next turn on fail; extraplanar creatures sent home (permanently if concentration held 1 min) (+1 target/slot)'},
+  'Blight':{lv:4,sch:'Necro',cast:'1a',rng:'30ft',conc:false,rit:false,cls:["Druid", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'CON save, 8d8 necrotic (plants auto-fail, 4d8 no save); no effect on undead/constructs (+1d8/slot above 4th)'},
+  'Confusion':{lv:4,sch:'Ench',cast:'1a',rng:'90ft',conc:true,rit:false,cls:["Bard", "Druid", "Sorcerer", "Wizard"],src:'PHB',d:'WIS save, random behavior in 10ft radius for 1 min; retry each turn (+5ft radius/slot)'},
+  'Death Ward':{lv:4,sch:'Abjur',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Cleric", "Paladin"],src:'PHB',d:'When reduced to 0 HP drop to 1 instead (first time only); or negate any spell that says target dies; 8hr'},
+  'Dimension Door':{lv:4,sch:'Conj',cast:'1a',rng:'500ft',conc:false,rit:false,cls:["Bard", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'Teleport self and one willing creature to exact known location within 500ft; misfire if destination is occupied'},
+  "Evard's Black Tentacles":{lv:4,sch:'Conj',cast:'1a',rng:'90ft',conc:true,rit:false,cls:["Wizard"],src:'PHB',d:'20ft square difficult terrain; DEX save or restrained and 3d6 bludgeoning; STR/DEX check each turn to escape; 1 min'},
+  'Fabricate':{lv:4,sch:'Trans',cast:'10min',rng:'120ft',conc:false,rit:false,cls:["Artificer", "Wizard"],src:'PHB',d:'Transform raw material into crafted product; up to 10ft cube or 1 cubic ft metal; replaces 1 day of crafting'},
+  'Fire Shield':{lv:4,sch:'Evoc',cast:'1a',rng:'Self',conc:false,rit:false,cls:["Sorcerer", "Wizard"],src:'PHB',d:'Warm (resist cold, attacker takes 2d8 fire) or Chill (resist fire, attacker takes 2d8 cold) shield; 10 min'},
+  'Freedom of Movement':{lv:4,sch:'Abjur',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Artificer", "Bard", "Cleric", "Druid", "Ranger"],src:'PHB',d:'Ignore difficult terrain, grappled/restrained by nonmagical means, and underwater movement penalties; 1hr'},
+  'Greater Invisibility':{lv:4,sch:'Illus',cast:'1a',rng:'Touch',conc:true,rit:false,cls:["Bard", "Sorcerer", "Wizard"],src:'PHB',d:'Invisible even while attacking or casting spells; 1 min'},
+  'Guardian of Faith':{lv:4,sch:'Conj',cast:'1a',rng:'30ft',conc:false,rit:false,cls:["Cleric"],src:'PHB',d:'Large spectral guardian; hostile creature within 10ft DEX save 20 radiant; total 60 dmg then spell ends; 8hr'},
+  'Hallucinatory Terrain':{lv:4,sch:'Illus',cast:'10min',rng:'300ft',conc:false,rit:false,cls:["Bard", "Druid", "Warlock", "Wizard"],src:'PHB',d:'Natural terrain in 150ft cube looks/sounds/smells different for 24hr; INT check to disbelieve'},
+  'Ice Storm':{lv:4,sch:'Evoc',cast:'1a',rng:'300ft',conc:false,rit:false,cls:["Druid", "Sorcerer", "Wizard"],src:'PHB',d:'20ft radius 40ft cylinder; 2d8 bludgeoning + 4d6 cold, DEX save half; difficult terrain until end of next turn (+1d8/slot)'},
+  'Locate Creature':{lv:4,sch:'Div',cast:'1a',rng:'Self',conc:true,rit:false,cls:["Bard", "Cleric", "Druid", "Paladin", "Ranger", "Wizard"],src:'PHB',d:'Sense direction to specific creature or nearest creature of type within 1000ft for 1hr; blocked by running water'},
+  'Phantasmal Killer':{lv:4,sch:'Illus',cast:'1a',rng:'120ft',conc:true,rit:false,cls:["Wizard"],src:'PHB',d:'WIS save, frightened; WIS save each turn or 4d10 psychic; 1 min (+1d10/slot)'},
+  'Polymorph':{lv:4,sch:'Trans',cast:'1a',rng:'60ft',conc:true,rit:false,cls:["Bard", "Druid", "Sorcerer", "Wizard"],src:'PHB',d:'WIS save (unwilling), transform into beast with CR up to target level/CR; retains mental stats only for willing targets; 1hr or until 0 HP'},
+  'Stoneskin':{lv:4,sch:'Abjur',cast:'1a',rng:'Touch',conc:true,rit:false,cls:["Artificer", "Druid", "Ranger", "Sorcerer", "Wizard"],src:'PHB',d:'Resistance to nonmagical B/P/S weapon damage for 1hr (100gp diamond consumed)'},
+  'Wall of Fire':{lv:4,sch:'Evoc',cast:'1a',rng:'120ft',conc:true,rit:false,cls:["Druid", "Sorcerer", "Wizard"],src:'PHB',d:'Up to 60ft long 20ft high wall; chosen side 5d8 fire to creatures entering or starting in front; 1 min (+1d8/slot)'},
+  'Animate Objects':{lv:5,sch:'Trans',cast:'1a',rng:'120ft',conc:true,rit:false,cls:["Artificer", "Bard", "Sorcerer", "Wizard"],src:'PHB',d:'Animate up to 10 objects; Tiny(+1d4,AC18), Small(+1d6,AC16), Medium(+2d6,AC13), Large(+2d10,AC10); 1 min (+2 objects/slot)'},
+  "Bigby's Hand":{lv:5,sch:'Evoc',cast:'1a',rng:'120ft',conc:true,rit:false,cls:["Artificer", "Wizard"],src:'PHB',d:'Large spectral hand (AC 20, HP = your HP); Clenched Fist, Forceful Hand, Grasping Hand, or Interposing Hand each turn; 1 min (+2d8/slot)'},
+  'Cloudkill':{lv:5,sch:'Conj',cast:'1a',rng:'120ft',conc:true,rit:false,cls:["Sorcerer", "Wizard"],src:'PHB',d:'20ft sphere; CON save 5d8 poison (half on save); moves 10ft away each turn; heavily obscured; 10 min (+1d8/slot)'},
+  'Cone of Cold':{lv:5,sch:'Evoc',cast:'1a',rng:'Self(60ft cone)',conc:false,rit:false,cls:["Sorcerer", "Wizard"],src:'PHB',d:'CON save, 8d8 cold (+1d8/slot); frozen creatures shatter if dropped to 0 HP'},
+  'Contact Other Plane':{lv:5,sch:'Div',cast:'1min',rng:'Self',conc:false,rit:true,cls:["Warlock", "Wizard"],src:'PHB',d:'Ask extraplanar entity 5 yes/no/one-word questions; DC 15 INT save or insanity 1d10 days; 1 min'},
+  'Destructive Wave':{lv:5,sch:'Evoc',cast:'1a',rng:'Self(30ft)',conc:false,rit:false,cls:["Paladin"],src:'PHB',d:'CON save all in 30ft; 5d6 thunder + 5d6 radiant or necrotic on fail; prone on fail'},
+  'Dispel Evil and Good':{lv:5,sch:'Abjur',cast:'1a',rng:'Self',conc:true,rit:false,cls:["Cleric", "Paladin"],src:'PHB',d:'vs aberrations/celestials/elementals/fey/fiends/undead: attacks disadv vs you; Break Enchantment or Dismissal (CHA save banishment) as action; 1 min'},
+  'Dominate Person':{lv:5,sch:'Ench',cast:'1a',rng:'60ft',conc:true,rit:false,cls:["Bard", "Sorcerer", "Wizard"],src:'PHB',d:'WIS save, dominate humanoid; issue commands (no action); charm ends if damaged (+1 min/slot above 5th)'},
+  'Flame Strike':{lv:5,sch:'Evoc',cast:'1a',rng:'60ft',conc:false,rit:false,cls:["Cleric"],src:'PHB',d:'10ft radius 40ft tall cylinder; DEX save, 4d6 fire + 4d6 radiant (+1d6 each type/slot)'},
+  'Geas':{lv:5,sch:'Ench',cast:'1min',rng:'60ft',conc:false,rit:false,cls:["Bard", "Cleric", "Druid", "Paladin", "Wizard"],src:'PHB',d:'CHA save, command creature (no suicide); 5d10 psychic per day if violated; 30 days (permanent at 7th+)'},
+  'Greater Restoration':{lv:5,sch:'Abjur',cast:'1a',rng:'Touch',conc:false,rit:false,cls:["Artificer", "Bard", "Cleric", "Druid"],src:'PHB',d:'End one condition (charmed/exhaustion level/curse/attunement/petrification) or reduce max HP damage (100gp diamond dust consumed)'},
+  'Hold Monster':{lv:5,sch:'Ench',cast:'1a',rng:'90ft',conc:true,rit:false,cls:["Bard", "Sorcerer", "Warlock", "Wizard"],src:'PHB',d:'WIS save, any creature (not undead) paralyzed for 1 min; retry each turn (+1 target/slot)'},
+  'Insect Plague':{lv:5,sch:'Conj',cast:'1a',rng:'300ft',conc:true,rit:false,cls:["Cleric", "Druid", "Sorcerer"],src:'PHB',d:'20ft radius sphere of biting locusts; CON save 4d10 piercing, half on save; difficult terrain, heavily obscured; 10 min (+1d10/slot)'},
+  'Mass Cure Wounds':{lv:5,sch:'Evoc',cast:'1a',rng:'60ft',conc:false,rit:false,cls:["Bard", "Cleric", "Druid"],src:'PHB',d:'Up to 6 creatures restore 3d8 + spellcasting mod HP (+1d8/slot)'},
+  'Raise Dead':{lv:5,sch:'Necro',cast:'1hr',rng:'Touch',conc:false,rit:false,cls:["Bard", "Cleric", "Paladin"],src:'PHB',d:'Restore creature dead within 10 days to 1 HP; loses one death penalty (all stats -4, proficiencies halved); cannot restore missing body parts (500gp diamond consumed)'},
+  'Scrying':{lv:5,sch:'Div',cast:'10min',rng:'Self',conc:true,rit:false,cls:["Bard", "Cleric", "Druid", "Paladin", "Warlock", "Wizard"],src:'PHB',d:'WIS save modified by familiarity; observe creature or location; sensor follows target; 10 min'},
+  'Steel Wind Strike':{lv:5,sch:'Conj',cast:'1a',rng:'30ft',conc:false,rit:false,cls:["Ranger", "Wizard"],src:'XGtE',d:'Melee spell attacks vs up to 5 creatures, 6d10 force each; teleport to one of the targets after'},
+  'Synaptic Static':{lv:5,sch:'Ench',cast:'1a',rng:'120ft',conc:false,rit:false,cls:["Bard", "Sorcerer", "Warlock", "Wizard"],src:'XGtE',d:'INT save in 20ft sphere, 8d6 psychic; on fail subtract 1d6 from attack rolls, ability checks, and concentration saves for 1 min'},
+  'Telekinesis':{lv:5,sch:'Trans',cast:'1a',rng:'60ft',conc:true,rit:false,cls:["Sorcerer", "Wizard"],src:'PHB',d:'Move object (1000 lbs) up to 30ft or try to move creature (STR contest); 10 min'},
+  'Tree Stride':{lv:5,sch:'Conj',cast:'1a',rng:'Self',conc:true,rit:false,cls:["Cleric", "Druid", "Ranger"],src:'PHB',d:'Enter same-species tree within 5ft, exit another same-species tree within 500ft; 1 min (enter once/turn)'},
+  'Wall of Force':{lv:5,sch:'Evoc',cast:'1a',rng:'120ft',conc:true,rit:false,cls:["Wizard"],src:'PHB',d:'Invisible impenetrable wall (immune to all damage, Disintegrate destroys); up to 10 panels (10x10ft each); 10 min'},
+  'Wall of Stone':{lv:5,sch:'Evoc',cast:'1a',rng:'120ft',conc:true,rit:false,cls:["Artificer", "Druid", "Sorcerer", "Wizard"],src:'PHB',d:'Up to 10 panels (10x10x6in each) non-magical stone wall; can be permanent; 10 min (or permanent)'},
+};
+
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & DATA
 // ══════════════════════════════════════════════════════
@@ -646,6 +928,23 @@ const SCHOOL_NAMES = {
   Necro:'Necromancy', Trans:'Transmutation'
 };
 const LEVEL_LABELS = ['Cantrip','1st','2nd','3rd','4th','5th','6th','7th','8th','9th'];
+
+const CLASS_CAST_ABILITY = {
+  Artificer:'INT', Bard:'CHA', Cleric:'WIS', Druid:'WIS',
+  Paladin:'CHA', Ranger:'WIS', Sorcerer:'CHA', Warlock:'CHA', Wizard:'INT'
+};
+
+const CLASS_SUBCLASSES = {
+  Artificer: ['Alchemist','Armorer','Artillerist','Battle Smith'],
+  Bard: ['College of Creation','College of Eloquence','College of Glamour','College of Lore','College of Spirits','College of Swords','College of Valor','College of Whispers'],
+  Cleric: ['Arcana Domain','Death Domain','Forge Domain','Grave Domain','Knowledge Domain','Life Domain','Light Domain','Nature Domain','Order Domain','Peace Domain','Tempest Domain','Trickery Domain','Twilight Domain','War Domain'],
+  Druid: ['Circle of Dreams','Circle of Land','Circle of Moon','Circle of Spores','Circle of Stars','Circle of the Shepherd','Circle of Wildfire'],
+  Paladin: ['Oath of Conquest','Oath of Devotion','Oath of Glory','Oath of Redemption','Oath of the Ancients','Oath of the Watchers','Oath of Vengeance','Oathbreaker'],
+  Ranger: ['Beast Master','Fey Wanderer','Gloom Stalker','Horizon Walker','Hunter','Monster Slayer','Swarmkeeper'],
+  Sorcerer: ['Aberrant Mind','Clockwork Soul','Divine Soul','Draconic Bloodline','Shadow Magic','Storm Sorcery','Wild Magic'],
+  Warlock: ['The Archfey','The Celestial','The Fathomless','The Fiend','The Genie','The Great Old One','The Hexblade','The Undead','The Undying'],
+  Wizard: ['Abjuration','Bladesinging','Chronurgy Magic','Conjuration','Divination','Enchantment','Evocation','Graviturgy Magic','Illusion','Necromancy','Order of Scribes','Transmutation','War Magic']
+};
 
 const GRANTED_SPELLS = {
   subclasses: {
@@ -744,22 +1043,20 @@ const ART_SLOTS = [
 // ══════════════════════════════════════════════════════
 let spellbook = [];       // array of spell names
 let filteredSpells = [];
+let t2LevelFilter = new Set([0,1,2,3,4,5,6,7,8,9]);
 let filterState = {
   levels: new Set([0,1,2,3,4,5,6,7,8,9]),
   schools: new Set(['Abjur','Conj','Div','Ench','Evoc','Illus','Necro','Trans']),
   conc: false, rit: false
 };
+const SRC_SETS = {
+  all: null,
+  PHB: new Set(['PHB']),
+  'PHB+XGtE': new Set(['PHB','XGtE']),
+  'PHB+XGtE+TCoE': new Set(['PHB','XGtE','TCoE'])
+};
 
-// ══════════════════════════════════════════════════════
-//  INIT
-// ══════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
-  setupChipListeners();
-  setupDropZone();
-  applyFilters();
-  renderSpellbook();
-});
+// (init moved to end of script)
 
 document.getElementById('bw-toggle').addEventListener('change', e => {
   document.body.dataset.bw = e.target.checked ? '1' : '';
@@ -778,24 +1075,115 @@ function switchTab(n) {
 //  FILTER SETUP
 // ══════════════════════════════════════════════════════
 function setupChipListeners() {
+  const ALL_LEVELS  = [0,1,2,3,4,5,6,7,8,9];
+  const ALL_SCHOOLS = ['Abjur','Conj','Div','Ench','Evoc','Illus','Necro','Trans'];
+
   document.querySelectorAll('#f-levels .cb-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
+    const input = chip.querySelector('input');
+    input.addEventListener('change', () => {
       const lv = parseInt(chip.dataset.lv);
-      chip.classList.toggle('checked');
-      chip.querySelector('input').checked = chip.classList.contains('checked');
-      if (chip.classList.contains('checked')) filterState.levels.add(lv);
-      else filterState.levels.delete(lv);
+      if (filterState.levels.size === ALL_LEVELS.length) {
+        // All selected → exclusively select the clicked chip
+        filterState.levels.clear();
+        document.querySelectorAll('#f-levels .cb-chip').forEach(c => {
+          c.classList.remove('checked');
+          c.querySelector('input').checked = false;
+        });
+        filterState.levels.add(lv);
+        chip.classList.add('checked');
+        input.checked = true;
+      } else if (input.checked) {
+        filterState.levels.add(lv);
+        chip.classList.add('checked');
+      } else {
+        // Don't allow deselecting the last chip
+        if (filterState.levels.size <= 1) { input.checked = true; return; }
+        filterState.levels.delete(lv);
+        chip.classList.remove('checked');
+      }
       applyFilters();
     });
   });
+
   document.querySelectorAll('#f-schools .cb-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
+    const input = chip.querySelector('input');
+    input.addEventListener('change', () => {
       const sch = chip.dataset.sch;
-      chip.classList.toggle('checked');
-      chip.querySelector('input').checked = chip.classList.contains('checked');
-      if (chip.classList.contains('checked')) filterState.schools.add(sch);
-      else filterState.schools.delete(sch);
+      if (filterState.schools.size === ALL_SCHOOLS.length) {
+        // All selected → exclusively select the clicked chip
+        filterState.schools.clear();
+        document.querySelectorAll('#f-schools .cb-chip').forEach(c => {
+          c.classList.remove('checked');
+          c.querySelector('input').checked = false;
+        });
+        filterState.schools.add(sch);
+        chip.classList.add('checked');
+        input.checked = true;
+      } else if (input.checked) {
+        filterState.schools.add(sch);
+        chip.classList.add('checked');
+      } else {
+        if (filterState.schools.size <= 1) { input.checked = true; return; }
+        filterState.schools.delete(sch);
+        chip.classList.remove('checked');
+      }
       applyFilters();
+    });
+  });
+}
+
+function selectAllLevels() {
+  filterState.levels = new Set([0,1,2,3,4,5,6,7,8,9]);
+  document.querySelectorAll('#f-levels .cb-chip').forEach(c => {
+    c.classList.add('checked');
+    c.querySelector('input').checked = true;
+  });
+  applyFilters();
+}
+
+function selectAllSchools() {
+  filterState.schools = new Set(['Abjur','Conj','Div','Ench','Evoc','Illus','Necro','Trans']);
+  document.querySelectorAll('#f-schools .cb-chip').forEach(c => {
+    c.classList.add('checked');
+    c.querySelector('input').checked = true;
+  });
+  applyFilters();
+}
+
+function t2SelectAllLevels() {
+  t2LevelFilter = new Set([0,1,2,3,4,5,6,7,8,9]);
+  document.querySelectorAll('#t2-levels .cb-chip').forEach(c => {
+    c.classList.add('checked');
+    c.querySelector('input').checked = true;
+  });
+  renderClassBookInline();
+}
+
+function setupTab2ChipListeners() {
+  const ALL = [0,1,2,3,4,5,6,7,8,9];
+  document.querySelectorAll('#t2-levels .cb-chip').forEach(chip => {
+    const input = chip.querySelector('input');
+    input.addEventListener('change', () => {
+      const lv = parseInt(chip.dataset.lv);
+      if (t2LevelFilter.size === ALL.length) {
+        // All selected → exclusively select clicked chip
+        t2LevelFilter.clear();
+        document.querySelectorAll('#t2-levels .cb-chip').forEach(c => {
+          c.classList.remove('checked');
+          c.querySelector('input').checked = false;
+        });
+        t2LevelFilter.add(lv);
+        chip.classList.add('checked');
+        input.checked = true;
+      } else if (input.checked) {
+        t2LevelFilter.add(lv);
+        chip.classList.add('checked');
+      } else {
+        if (t2LevelFilter.size <= 1) { input.checked = true; return; }
+        t2LevelFilter.delete(lv);
+        chip.classList.remove('checked');
+      }
+      renderClassBookInline();
     });
   });
 }
@@ -816,14 +1204,14 @@ function toggleFilters() {
 // ══════════════════════════════════════════════════════
 //  FILTER LOGIC
 // ══════════════════════════════════════════════════════
-const SRC_SETS = {
-  all: null,
-  PHB: new Set(['PHB']),
-  'PHB+XGtE': new Set(['PHB','XGtE']),
-  'PHB+XGtE+TCoE': new Set(['PHB','XGtE','TCoE'])
-};
-
 function applyFilters() {
+  if (typeof SPELL_REF === 'undefined') {
+    const container = document.getElementById('browse-list');
+    if (container) container.innerHTML = '<div style="padding:20px 0;color:#c94c4c;font-family:\'Cinzel\',serif;font-size:12px;">\u26a0 Spell database failed to load.<br><span style="font-size:11px;font-family:\'Lora\',serif;color:var(--parchment-dim);">Make sure <code>spell_ref_output.js</code> is in the same folder as this file, and open via a local server (not directly from the filesystem).</span></div>';
+    const countLabel = document.getElementById('spell-count-label');
+    if (countLabel) countLabel.textContent = '0 spells';
+    return;
+  }
   const fClass = document.getElementById('f-class').value;
   const fSrc = document.getElementById('f-src').value;
   const fSearch = document.getElementById('f-search').value.toLowerCase().trim();
@@ -989,10 +1377,10 @@ function updatePrepCounter() {
   let maxPrep = null;
   if (cls && lv && abilityScore) {
     const mod = Math.floor((abilityScore - 10) / 2);
-    const halfCasters = ['Paladin','Ranger','Artificer'];
+    const halfCasters = ['Paladin','Artificer'];
     if (halfCasters.includes(cls)) {
       maxPrep = Math.max(1, mod + Math.floor(lv / 2));
-    } else if (['Warlock','Sorcerer','Bard'].includes(cls)) {
+    } else if (['Warlock','Sorcerer','Bard','Ranger'].includes(cls)) {
       maxPrep = null; // known spells
     } else {
       maxPrep = Math.max(1, mod + lv);
@@ -1041,6 +1429,87 @@ function onCharChange() {
 
 function onSubclassChange() {
   renderGranted();
+}
+
+function onClassChange() {
+  const cls = document.getElementById('char-class').value;
+  // Auto-fill casting ability
+  if (cls && CLASS_CAST_ABILITY[cls]) {
+    document.getElementById('char-ability').value = CLASS_CAST_ABILITY[cls];
+  }
+  // Populate subclass dropdown
+  updateSubclassOptions(cls);
+  // Sync prep counter and class filter
+  onCharChange();
+  // Update level chips then refresh list
+  updateLevelFilter();
+  applyFilters();
+}
+
+function onLevelChange() {
+  updateLevelFilter();
+  onCharChange();
+  applyFilters();
+}
+
+function updateSubclassOptions(cls) {
+  const sel = document.getElementById('char-subclass');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— Select Subclass —</option>';
+  const subs = CLASS_SUBCLASSES[cls] || [];
+  for (const s of subs) {
+    const opt = document.createElement('option');
+    opt.value = s; opt.textContent = s;
+    if (s === prev) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  // Fire granted-spells refresh in case subclass cleared
+  renderGranted();
+}
+
+function getMaxSpellLevel(cls, charLevel) {
+  const lv = charLevel;
+  // Full casters: slots at lv 1, new level every 2 char levels
+  if (['Bard','Cleric','Druid','Sorcerer','Wizard'].includes(cls)) {
+    if (lv <= 2)  return 1; if (lv <= 4)  return 2; if (lv <= 6)  return 3;
+    if (lv <= 8)  return 4; if (lv <= 10) return 5; if (lv <= 12) return 6;
+    if (lv <= 14) return 7; if (lv <= 16) return 8; return 9;
+  }
+  // Warlock: pact magic, slots up to 5th at char level 9
+  if (cls === 'Warlock') {
+    if (lv <= 2) return 1; if (lv <= 4) return 2; if (lv <= 6) return 3;
+    if (lv <= 8) return 4; return 5;
+  }
+  // Artificer: spellcasting at level 1, half-caster progression (2nd slots at lv 5)
+  if (cls === 'Artificer') {
+    if (lv <= 4)  return 1; if (lv <= 8)  return 2;
+    if (lv <= 12) return 3; if (lv <= 16) return 4; return 5;
+  }
+  // Paladin & Ranger: spellcasting at level 2, half-caster progression
+  if (['Paladin','Ranger'].includes(cls)) {
+    if (lv <= 1)  return 0; if (lv <= 4)  return 1; if (lv <= 8)  return 2;
+    if (lv <= 12) return 3; if (lv <= 16) return 4; return 5;
+  }
+  return 0;
+}
+
+function updateLevelFilter() {
+  const cls = document.getElementById('char-class').value;
+  const lv  = parseInt(document.getElementById('char-level').value);
+  if (!cls || !lv) return;
+  const maxLv = getMaxSpellLevel(cls, lv);
+  filterState.levels = new Set();
+  document.querySelectorAll('#f-levels .cb-chip').forEach(c => {
+    const chipLv = parseInt(c.dataset.lv);
+    if (chipLv <= maxLv) {
+      filterState.levels.add(chipLv);
+      c.classList.add('checked');
+      c.querySelector('input').checked = true;
+    } else {
+      c.classList.remove('checked');
+      c.querySelector('input').checked = false;
+    }
+  });
 }
 
 function renderGranted() {
@@ -1140,39 +1609,61 @@ function lvOrdinal(lv) {
 function exportCards(perPage) {
   const spells = getSpellsToExport();
   if (!spells.length) { alert('Your spellbook is empty!'); return; }
-  const cols = 2;
-  const rows = perPage / 2; // 2 or 4
-  const cardH = perPage === 4 ? '4.8in' : '2.3in';
-  const truncLen = perPage === 8 ? 160 : 9999;
+  const cardH = perPage === 4 ? '4.75in' : '2.25in';
+  const truncLen = perPage === 8 ? 180 : 9999;
+  const nameSize = perPage === 4 ? '14px' : '11.5px';
+  const bodySize = perPage === 4 ? '10.5px' : '9px';
+
+  const DARK = {
+    Abjur:'#1e5c8a', Conj:'#8a5a08', Div:'#3a7888', Ench:'#7a2870',
+    Evoc:'#7a1818', Illus:'#442080', Necro:'#145814', Trans:'#6a3800'
+  };
 
   let pages = '';
   for (let i = 0; i < spells.length; i += perPage) {
     const chunk = spells.slice(i, i + perPage);
-    let grid = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;page-break-after:always;">';
+    let grid = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;page-break-after:always;padding:2px;">';
     for (const [name, s] of chunk) {
-      const bg = schColor(s.sch);
+      const bg  = schColor(s.sch);
+      const bgD = isBW() ? '#333' : (DARK[s.sch] || '#333');
       const desc = truncLen < 9999 ? (s.d||'').slice(0,truncLen) + ((s.d||'').length > truncLen ? '…' : '') : (s.d||'');
       grid += `
-        <div style="border:1.5px solid ${bg};border-radius:6px;overflow:hidden;height:${cardH};display:flex;flex-direction:column;">
-          <div style="background:${bg};color:#fff;padding:6px 10px;text-shadow:0 1px 2px rgba(0,0,0,0.4);">
-            <div style="font-family:'Cinzel',serif;font-size:${perPage===4?'13px':'11px'};font-weight:700;">${escHtml(name)}</div>
-            <div style="font-size:9px;opacity:0.9;">${lvOrdinal(s.lv)} • ${SCHOOL_NAMES[s.sch]||s.sch}</div>
+        <div style="border:2px solid ${bg};border-radius:9px;overflow:hidden;height:${cardH};display:flex;flex-direction:column;background:#fdf8f0;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.8),0 2px 8px rgba(0,0,0,0.18);">
+
+          <!-- Header -->
+          <div style="background:linear-gradient(135deg,${bg} 0%,${bgD} 100%);color:#fff;padding:8px 12px;position:relative;text-shadow:0 1px 3px rgba(0,0,0,0.45);">
+            <div style="position:absolute;right:9px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.55);background:rgba(0,0,0,0.22);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:6.5px;font-weight:700;text-align:center;line-height:1.15;color:rgba(255,255,255,0.95);">${s.sch}</div>
+            <div style="font-family:'Cinzel',serif;font-size:${nameSize};font-weight:700;letter-spacing:0.03em;padding-right:36px;line-height:1.2;">${escHtml(name)}</div>
+            <div style="font-size:8px;opacity:0.88;margin-top:2px;font-family:'Cinzel',serif;letter-spacing:0.06em;">${lvOrdinal(s.lv)} &nbsp;&#10022;&nbsp; ${SCHOOL_NAMES[s.sch]||s.sch}</div>
           </div>
-          <div style="padding:6px 10px;flex:1;overflow:hidden;font-size:${perPage===4?'10px':'9px'};">
-            <div style="display:flex;gap:10px;margin-bottom:4px;font-size:9px;color:#555;">
-              <span><b>Cast:</b> ${escHtml(s.cast||'')}</span>
-              <span><b>Range:</b> ${escHtml(s.rng||'')}</span>
+
+          <!-- Gradient rule -->
+          <div style="height:3px;background:linear-gradient(90deg,transparent 0%,${bg}99 25%,${bg} 50%,${bg}99 75%,transparent 100%);flex-shrink:0;"></div>
+
+          <!-- Body -->
+          <div style="padding:7px 11px 5px;flex:1;overflow:hidden;font-size:${bodySize};">
+            <!-- Stat pills -->
+            <div style="display:flex;gap:4px;margin-bottom:5px;flex-wrap:wrap;">
+              <span style="background:${bg}18;border:1px solid ${bg}55;border-radius:20px;padding:1px 8px;font-size:8px;font-family:'Cinzel',serif;color:#2a1200;white-space:nowrap;">Cast: ${escHtml(s.cast||'')}</span>
+              <span style="background:${bg}18;border:1px solid ${bg}55;border-radius:20px;padding:1px 8px;font-size:8px;font-family:'Cinzel',serif;color:#2a1200;white-space:nowrap;">Range: ${escHtml(s.rng||'')}</span>
+              ${s.conc ? '<span style="background:#ede8f8;border:1px solid #9070cc55;color:#4a28a0;border-radius:20px;padding:1px 8px;font-size:8px;font-family:\'Cinzel\',serif;white-space:nowrap;">&#9685; Concentration</span>' : ''}
+              ${s.rit ? '<span style="background:#e4f2e8;border:1px solid #4a9a5055;color:#256040;border-radius:20px;padding:1px 8px;font-size:8px;font-family:\'Cinzel\',serif;white-space:nowrap;">&#9651; Ritual</span>' : ''}
             </div>
-            <div style="display:flex;gap:6px;margin-bottom:4px;">
-              ${s.conc ? '<span style="background:#e8e0f8;color:#6040a0;border-radius:3px;padding:1px 5px;font-size:8px;font-family:serif;">Concentration</span>' : ''}
-              ${s.rit ? '<span style="background:#e0f0e8;color:#307050;border-radius:3px;padding:1px 5px;font-size:8px;font-family:serif;">Ritual</span>' : ''}
+            <!-- Ruled divider -->
+            <div style="border-top:1px solid ${bg}55;margin-bottom:5px;position:relative;text-align:center;">
+              <span style="position:relative;top:-7px;background:#fdf8f0;padding:0 5px;font-size:9px;color:${bg};opacity:0.7;">&#10022;</span>
             </div>
-            <div style="line-height:1.5;color:#2a1200;">${escHtml(desc)}</div>
+            <!-- Description -->
+            <div style="line-height:1.55;color:#2a1200;font-family:'Lora',serif;">${escHtml(desc)}</div>
           </div>
-          <div style="padding:4px 10px;border-top:1px solid ${bg}33;font-size:8px;color:#888;display:flex;justify-content:space-between;">
-            <span>${escHtml(s.src)}</span>
-            <span>${escHtml(s.sch)}</span>
+
+          <!-- Footer -->
+          <div style="padding:3px 12px;border-top:1px solid ${bg}55;background:linear-gradient(90deg,${bg}12,${bg}22,${bg}12);font-size:8px;color:#5a3000;display:flex;justify-content:space-between;align-items:center;font-family:'Cinzel',serif;letter-spacing:0.04em;flex-shrink:0;">
+            <span style="opacity:0.75;">${escHtml(s.src)}</span>
+            <span style="opacity:0.35;letter-spacing:0.2em;">&#9670; &#9670; &#9670;</span>
+            <span style="opacity:0.75;">${SCHOOL_NAMES[s.sch]||s.sch}</span>
           </div>
+
         </div>`;
     }
     grid += '</div>';
@@ -1181,7 +1672,7 @@ function exportCards(perPage) {
 
   const win = window.open('', '_blank');
   if (!win) { alert('Please allow popups for this site.'); return; }
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Spell Cards</title><style>${printStyles()}</style></head><body>${pages}<script>window.onload=()=>window.print();<\/script></body></html>`);
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Spell Cards</title><style>${printStyles()}</style></head><body style="background:#fff;">${pages}<script>window.onload=()=>window.print();<\/script></body></html>`);
   win.document.close();
 }
 
@@ -1398,12 +1889,15 @@ async function exportPDF() {
     const pdfBytes = await pdfDoc.save();
     const blob = new Blob([pdfBytes], {type:'application/pdf'});
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const charName = document.getElementById('char-name').value || 'Character';
-    a.download = charName + ' - Spellcasting Sheet.pdf';
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    const win = window.open(url, '_blank');
+    if (!win) {
+      const a = document.createElement('a');
+      a.href = url;
+      const charName = document.getElementById('char-name').value || 'Character';
+      a.download = charName + ' - Spellcasting Sheet.pdf';
+      a.click();
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
 
   } catch(err) {
     alert('PDF export error: ' + err.message);
@@ -1416,16 +1910,14 @@ async function exportPDF() {
 // ══════════════════════════════════════════════════════
 function previewClassBook() {
   const cls = document.getElementById('t2-class').value;
-  const maxLvRaw = document.getElementById('t2-maxlv').value;
   const srcVal = document.getElementById('t2-src').value;
 
   if (!cls) { alert('Please select a class.'); return; }
 
-  const maxLv = maxLvRaw === 'all' ? 9 : parseInt(maxLvRaw);
   const srcSet = SRC_SETS[srcVal];
 
   const spells = Object.entries(SPELL_REF).filter(([name, s]) => {
-    if (s.lv > maxLv) return false;
+    if (!t2LevelFilter.has(s.lv)) return false;
     if (srcSet && !srcSet.has(s.src)) return false;
     const clsList = Array.isArray(s.cls) ? s.cls : s.cls.split(',').map(c=>c.trim());
     return clsList.includes(cls);
@@ -1476,6 +1968,65 @@ function previewClassBook() {
   if (!win) { alert('Please allow popups for this site.'); return; }
   win.document.write(html);
   win.document.close();
+}
+
+function renderClassBookInline() {
+  const cls = document.getElementById('t2-class').value;
+  const preview = document.getElementById('t2-preview');
+
+  if (!cls) {
+    preview.innerHTML = '<div style="color:var(--parchment-dim);text-align:center;padding:40px;">Select a class above to display its spell list.</div>';
+    return;
+  }
+
+  const srcVal = document.getElementById('t2-src').value;
+  const srcSet = SRC_SETS[srcVal];
+
+  const spells = Object.entries(SPELL_REF).filter(([name, s]) => {
+    if (!t2LevelFilter.has(s.lv)) return false;
+    if (srcSet && !srcSet.has(s.src)) return false;
+    const clsList = Array.isArray(s.cls) ? s.cls : s.cls.split(',').map(c=>c.trim());
+    return clsList.includes(cls);
+  }).sort((a,b) => {
+    if (a[1].lv !== b[1].lv) return a[1].lv - b[1].lv;
+    return a[0].localeCompare(b[0]);
+  });
+
+  if (!spells.length) {
+    preview.innerHTML = '<div style="color:var(--parchment-dim);text-align:center;padding:40px;">No spells found for those filters.</div>';
+    return;
+  }
+
+  const byLevel = {};
+  for (const [name,s] of spells) {
+    if (!byLevel[s.lv]) byLevel[s.lv] = [];
+    byLevel[s.lv].push([name,s]);
+  }
+
+  let html = `<h1 style="font-family:'Cinzel',serif;font-size:18px;color:var(--gold);margin-bottom:16px;border-bottom:2px solid var(--gold-dim);padding-bottom:8px;">${escHtml(cls)} Spell List <span style="font-size:12px;font-weight:400;color:var(--parchment-dim);">(${spells.length} spells)</span></h1>`;
+  for (const lv of Object.keys(byLevel).sort((a,b)=>a-b)) {
+    html += `<div style="margin-bottom:18px;">
+      <h2 style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:10px;">${LEVEL_LABELS[lv]} Spells <span style="font-size:11px;font-weight:400;color:var(--parchment-dim);">(${byLevel[lv].length})</span></h2>`;
+    for (const [name,s] of byLevel[lv]) {
+      const bg = SCHOOL_COLORS[s.sch] || '#888';
+      html += `<div style="margin-bottom:6px;padding:6px 10px;border-left:3px solid ${bg};background:rgba(255,255,255,0.04);border-radius:0 4px 4px 0;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px;">
+          <span style="font-family:'Cinzel',serif;font-size:12px;font-weight:700;color:var(--parchment);">${escHtml(name)}</span>
+          <span style="font-size:9px;background:${bg};color:#fff;padding:1px 6px;border-radius:3px;">${s.sch}</span>
+          ${s.conc?'<span style="font-size:9px;background:rgba(96,64,160,0.3);color:#c0a0ff;padding:1px 5px;border-radius:3px;">Conc</span>':''}
+          ${s.rit?'<span style="font-size:9px;background:rgba(48,112,80,0.3);color:#80c0a0;padding:1px 5px;border-radius:3px;">Ritual</span>':''}
+          <span style="font-size:9px;color:var(--parchment-dim);">${escHtml(s.src)}</span>
+        </div>
+        <div style="font-size:9px;color:var(--parchment-dim);margin-bottom:2px;">Cast: ${escHtml(s.cast||'')} &nbsp;|&nbsp; Range: ${escHtml(s.rng||'')}</div>
+        <div style="font-size:10px;line-height:1.5;color:var(--parchment);">${escHtml(s.d||'')}</div>
+      </div>`;
+    }
+    html += '</div>';
+  }
+
+  preview.style.textAlign = 'left';
+  preview.style.padding = '16px';
+  preview.innerHTML = html;
 }
 
 // ══════════════════════════════════════════════════════
@@ -1532,6 +2083,7 @@ async function handleImportFile(file) {
 }
 
 async function readPDFFields(file) {
+  if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js library not loaded — PDF import unavailable.');
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
   const fields = {};
@@ -1602,11 +2154,12 @@ function applyImportedFields(fields) {
     const score = parseInt(fields[scoreField]);
     if (!isNaN(score)) document.getElementById('char-ability-score').value = score;
   }
-  // Try all three and pick whichever matches
-  for (const ab of ['INT','WIS','CHA']) {
-    const score = parseInt(fields[ab]);
-    if (!isNaN(score)) {
-      // If no ability set yet, just set the score for the current one
+  // If no ability score found yet, try all three and use the one matching the selected ability
+  if (!document.getElementById('char-ability-score').value) {
+    const currentAb = document.getElementById('char-ability').value;
+    if (currentAb) {
+      const score = parseInt(fields[currentAb]);
+      if (!isNaN(score)) document.getElementById('char-ability-score').value = score;
     }
   }
 
@@ -1638,6 +2191,23 @@ function checkMobileFilters() {
 }
 window.addEventListener('resize', checkMobileFilters);
 checkMobileFilters();
+
+// ── Init (runs after all declarations above) ─────────
+function initApp() {
+  if (typeof pdfjsLib !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
+  }
+  setupChipListeners();
+  setupTab2ChipListeners();
+  setupDropZone();
+  applyFilters();
+  renderSpellbook();
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
 
 </script>
 </body>
